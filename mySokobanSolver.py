@@ -103,7 +103,10 @@ class SokobanPuzzle(search.Problem):
 
 
     def __init__(self, warehouse):
-        raise NotImplementedError()
+        raise NotImplementedError
+
+    def result(self, action):
+        raise NotImplementedError
 
     def actions(self, state):
         """
@@ -120,6 +123,9 @@ class SokobanPuzzle(search.Problem):
             #Do the other
 
 
+        raise NotImplementedError
+
+    def h(self,action):
         raise NotImplementedError
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -160,7 +166,7 @@ def solve_sokoban_elem(warehouse):
     This function should solve using elementary actions
     the puzzle defined in a file.
 
-    @param warehouse: a valid Warehouse object
+    @param warehouse: a valid Warehouse object (from sokoban.py)
 
     @return
         If puzzle cannot be solved return the string 'Impossible'
@@ -181,7 +187,7 @@ def can_go_there(warehouse, dst):
     Determine whether the worker can walk to the cell dst=(row,column)
     without pushing any box.
 
-    @param warehouse: a valid Warehouse object
+    @param warehouse: a valid Warehouse object (from sokoban.py)
 
     @return
       True if the worker can walk to cell dst=(row,column) without pushing any box
