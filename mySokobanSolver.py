@@ -103,6 +103,7 @@ class SokobanPuzzle(search.Problem):
 
 
     def __init__(self, warehouse):
+        # Cody
         raise NotImplementedError
 
     def result(self, action):
@@ -116,6 +117,7 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
+        # Mai !
 
         if self.macro:
             #Do one thing
