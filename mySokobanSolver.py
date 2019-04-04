@@ -25,6 +25,17 @@ import search
 import sokoban
 
 
+#  Global Variables - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+MOVEMENTS = {"Up"   : ( 0,-1),
+             "Down" : ( 0, 1),
+             "Left" : (-1, 0),
+             "Right": ( 1, 0)}
+
+UP    = MOVEMENTS["Up"]
+DOWN  = MOVEMENTS["Down"]
+LEFT  = MOVEMENTS["Left"]
+RIGHT = MOVEMENTS["Right"]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -35,7 +46,7 @@ def my_team():
     of triplet of the form (student_number, first_name, last_name)
 
     '''
-    return [ (9945008, 'Cody', 'Cripps'), (10283391, 'Faith', 'Lim'), (10411551, 'Mai', 'Bernt') ]
+   return [ (9945008, 'Cody', 'Cripps'), (10283391, 'Faith', 'Lim'), (1234569, 'Eva', 'Tardos')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -92,21 +103,21 @@ class SokobanPuzzle(search.Problem):
 
 
     '''
-    #
-    #         "INSERT YOUR CODE HERE"
-    #
-    #     Revisit the sliding puzzle and the pancake puzzle for inspiration!
-    #
-    #     Note that you will need to add several functions to
-    #     complete this class. For example, a 'result' function is needed
-    #     to satisfy the interface of 'search.Problem'.
 
 
     def __init__(self, warehouse):
-        # Cody
-        raise NotImplementedError
+        # Initialise SokobanPuzzle Problem
+
+        # Load Problemspace (Warehouse)
+        self.Warehouse = warehouse
+        self.walls = tuple(warehouse.walls)
+        self.boxes = tuple(warehouse.boxes)
+        self.worker = tuple(warehouse.worker)
+        self.targets = tuple(warehouse.targets)
+
 
     def result(self, action):
+
         raise NotImplementedError
 
     def actions(self, state):
@@ -117,7 +128,7 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
-        # Mai !
+        # Mai
 
         if self.macro:
             #Do one thing
@@ -178,9 +189,16 @@ def solve_sokoban_elem(warehouse):
             If the puzzle is already in a goal state, simply return []
     '''
 
-    ##         "INSERT YOUR CODE HERE"
 
-    raise NotImplementedError()
+    puzzle = SokobanPuzzle(warehouse)
+    puzzle.macro = False
+
+    result = search.uniform_cost_search(puzzle)
+
+    if result:
+        return result
+    else:
+        return 'Impossible'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -221,8 +239,14 @@ def solve_sokoban_macro(warehouse):
         If the puzzle is already in a goal state, simply return []
     '''
 
-    ##         "INSERT YOUR CODE HERE"
+    puzzle = SokobanPuzzle(warehouse)
+    puzzle.macro = True
 
-    raise NotImplementedError()
+    result = search.uniform_cost_search(puzzle)
+
+    if result:
+        return result
+    else:
+        return 'Impossible'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
