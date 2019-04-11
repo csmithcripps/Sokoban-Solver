@@ -135,8 +135,9 @@ class SokobanPuzzle(search.Problem):
             # Apply given movement to the position of the worker
             action = (self.worker[0] + MOVEMENTS[movement][0], self.worker[1] + MOVEMENTS[movement][1])
             # If taboo cells are not allowed
-            #if not self.allow_taboo_push:
-            
+            if not self.allow_taboo_push:
+                if action in taboo_cells_positions():
+                    continue
             # If the action results in a wall position the action is illegal
             if action in self.walls:
                 continue
@@ -269,3 +270,16 @@ def solve_sokoban_macro(warehouse):
         return 'Impossible'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def taboo_cells_positions(self):
+    taboo_cells = taboo_cells(self.Warehouse)
+    row = 0
+    column = 0
+    for character in taboo_cells:
+        if character == r'\n':
+            row += 1
+            column = 0
+        if character == 'X':
+            if row > 0:
+                row = -row
+            yield (row, column)
