@@ -163,11 +163,12 @@ class SokobanPuzzle(search.Problem):
     '''
 
 
-    def __init__(self, warehouse):
+    def __init__(self, warehouse, allow_taboo_push):
         # Initialise SokobanPuzzle Problem
 
         # Load Problemspace (Warehouse)
         self.Warehouse = warehouse
+        self.allow_taboo_push = allow_taboo_push
         self.walls = tuple(warehouse.walls)
         self.boxes = tuple(warehouse.boxes)
         self.worker = tuple(warehouse.worker)
@@ -186,15 +187,34 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
-        # Mai
-
+        actions = []
+        
+        for movement in MOVEMENTS:    
+            # Apply given movement to the position of the worker
+            action = (self.worker[0] + MOVEMENTS[movement][0], self.worker[1] + MOVEMENTS[movement][1])
+            # If taboo cells are not allowed
+            if not self.allow_taboo_push:
+                if action in taboo_cells_positions():
+                    continue
+            # If the action results in a wall position the action is illegal
+            if action in self.walls:
+                continue
+            # If the action pushes a box
+            if action in self.boxes:
+                # The new position of the box
+                box_movement = (action[0] + MOVEMENTS[movement][0], action[1] + MOVEMENTS[movement][1])
+                # If the box is pushed into a wall or another box the action is illegal
+                if box_movement in self.walls or box_movement in self.boxes:
+                    continue
+            # If no constraints are violated add the action to the list
+            actions.append(action)
+        
+        return actions
+    
         #if self.macro:
             #Do one thing
         #else:
             #Do the other
-
-
-        raise NotImplementedError
 
     def h(self,action):
         raise NotImplementedError
@@ -308,3 +328,16 @@ def solve_sokoban_macro(warehouse):
         return 'Impossible'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def taboo_cells_positions(self):
+    taboo_cells = taboo_cells(self.Warehouse)
+    row = 0
+    column = 0
+    for character in taboo_cells:
+        if character == r'\n':
+            row += 1
+            column = 0
+        if character == 'X':
+            if row > 0:
+                row = -row
+            yield (row, column)
