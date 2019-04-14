@@ -193,7 +193,7 @@ class SokobanPuzzle(search.Problem):
             # Apply given movement to the position of the worker
             action = (state.worker[0] + MOVEMENTS[movement][0], state.worker[1] + MOVEMENTS[movement][1])
             # If taboo cells are not allowed
-            if not state.allow_taboo_push:
+            if not self.allow_taboo_push:
                 if action in taboo_cells_positions():
                     continue
             # If the action results in a wall position the action is illegal
