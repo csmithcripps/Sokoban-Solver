@@ -330,10 +330,10 @@ def solve_sokoban_macro(warehouse):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def taboo_cells_positions(self):
-    taboo_cells = taboo_cells(self.Warehouse)
+    tc = taboo_cells(self.Warehouse)
     row = 0
     column = 0
-    for character in taboo_cells:
+    for character in tc:
         if character == r'\n':
             row += 1
             column = 0
