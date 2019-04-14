@@ -163,12 +163,13 @@ class SokobanPuzzle(search.Problem):
     '''
 
 
-    def __init__(self, warehouse, allow_taboo_push):
+    def __init__(self, warehouse, allow_taboo_push = False, macro = False):
         # Initialise SokobanPuzzle Problem
 
         # Load Problemspace (Warehouse)
         self.Warehouse = warehouse
         self.allow_taboo_push = allow_taboo_push
+        self.macro = macro
         self.walls = tuple(warehouse.walls)
         self.boxes = tuple(warehouse.boxes)
         self.worker = tuple(warehouse.worker)
