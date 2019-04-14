@@ -25,6 +25,7 @@ import search
 import sokoban
 
 
+
 #  Global Variables - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 MOVEMENTS = {"Up"   : ( 0,-1),
@@ -73,7 +74,64 @@ def taboo_cells(warehouse):
     '''
     # FAITH DO IT
 
-    ##         "INSERT YOUR CODE HERE"
+    taboo=[]
+
+    def warehouselimits(warehouse):
+        X,Y=zip(*warehouse.walls)
+        height=max(Y)-min(Y)
+        width = max(X)-min(X)
+        return (height,width)
+
+    #Identify taboo cells via rule 1:
+    # Rule 1: if a cell is a corner inside the warehouse and not a target,
+    #then it is a taboo cell.
+
+    #Work out if a wall is a corner
+
+    def itsacorner(coord, warehouse):
+        #its a corner if it is in walls and
+        # there are walls to the top left, top right, bottom left,
+        # or bottom right of this cell
+
+        #x+1, y+1 bottom right
+        #Condition if its a corner
+        x=coord[0]
+        y=coord[1]
+        # Hemmed by walls top and left
+        if ((x-1, y) in warehouse.walls and (x, y-1) in warehouse.walls):
+                return True
+
+        # Hemmed by walls top and right
+        if ((x+1,y) in warehouse.walls and (x, y-1) in warehouse.walls):
+                return True
+
+        # Hemmed by walls bottom and left
+        if ((x-1, y) in warehouse.walls and (x, y+1) in warehouse.walls):
+                return True
+
+        # Hemmed by walls bottom and right
+        if ((x+1, y) in warehouse.walls and (x+1, y+1) in warehouse.walls):
+                return True
+
+        return False
+
+    #Put warehouse into a list by \n
+    warehouseinlines=str(warehouse).split("\n")
+    #Create a coordinate list of empty space cells
+    emptyspace = list(sokoban.find_2D_iterator(warehouseinlines, " "))
+
+    for i in emptyspace:
+        if itsacorner(i, warehouse) and i not in warehouse.targets:
+            taboo.append(i)
+
+    return taboo
+
+
+    #Identify taboo cells via rule 2:
+     #Rule 2: all the cells between two corners inside the warehouse along a
+    #wall are taboo if none of these cells is a target.
+
+
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
