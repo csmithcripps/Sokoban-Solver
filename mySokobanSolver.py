@@ -189,32 +189,30 @@ class SokobanPuzzle(search.Problem):
         """
         actions = []
         
-        for movement in MOVEMENTS:    
-            # Apply given movement to the position of the worker
-            action = (state.worker[0] + MOVEMENTS[movement][0], state.worker[1] + MOVEMENTS[movement][1])
-            # If taboo cells are not allowed
-            if not self.allow_taboo_push:
-                if action in taboo_cells_positions():
+        if self.macro:
+            return actions
+        else:
+            for movement in MOVEMENTS:    
+                # Apply given movement to the position of the worker
+                action = (state.worker[0] + MOVEMENTS[movement][0], state.worker[1] + MOVEMENTS[movement][1])
+                # If taboo cells are not allowed
+                if not self.allow_taboo_push:
+                    if action in taboo_cells_positions():
+                        continue
+                # If the action results in a wall position the action is illegal
+                if action in state.walls:
                     continue
-            # If the action results in a wall position the action is illegal
-            if action in state.walls:
-                continue
-            # If the action pushes a box
-            if action in state.boxes:
-                # The new position of the box
-                box_movement = (action[0] + MOVEMENTS[movement][0], action[1] + MOVEMENTS[movement][1])
-                # If the box is pushed into a wall or another box the action is illegal
-                if box_movement in state.walls or box_movement in state.boxes:
-                    continue
-            # If no constraints are violated add the action to the list
-            actions.append(action)
+                # If the action pushes a box
+                if action in state.boxes:
+                    # The new position of the box
+                    box_movement = (action[0] + MOVEMENTS[movement][0], action[1] + MOVEMENTS[movement][1])
+                    # If the box is pushed into a wall or another box the action is illegal
+                    if box_movement in state.walls or box_movement in state.boxes:
+                        continue
+                # If no constraints are violated add the action to the list
+                actions.append(action)
         
         return actions
-    
-        #if self.macro:
-            #Do one thing
-        #else:
-            #Do the other
 
     def h(self,action):
         raise NotImplementedError
