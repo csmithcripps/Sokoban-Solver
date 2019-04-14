@@ -243,9 +243,30 @@ def check_action_seq(warehouse, action_seq):
                string returned by the method  Warehouse.__str__()
     '''
 
-    ##         "INSERT YOUR CODE HERE"
+    for action in action_seq:
+        # Apply given movement to the position of the worker
+        move = (warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
+         # If the action results in a wall position the action is illegal
+        if move in warehouse.walls:
+            return 'Failure'
+        # If the action pushes a box
+        if move in warehouse.boxes:
+            # The new position of the box
+            box_movement = (move[0] + MOVEMENTS[action][0], move[1] + MOVEMENTS[action][1])
+            # If the box is pushed into a wall or another box the action is illegal
+            if box_movement in warehouse.walls or box_movement in warehouse.boxes:
+                return 'Failure'
+        
+        # Apply the actions to the warehouse
+        warehouse.worker = (warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
+        # If worker pushes a box
+        if warehouse.worker in warehouse.boxes:
+            for i in range(0, len(warehouse.boxes)):
+                # Find the box and push it in the given direction
+                if warehouse.worker == warehouse.boxes[i]:
+                    warehouse.boxes[i] = (warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
 
-    raise NotImplementedError()
+    return warehouse.__str__()
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
