@@ -74,65 +74,152 @@ def taboo_cells(warehouse):
     '''
     # FAITH DO IT
 
-    taboo=[]
+    # Placeholder to hold taboo coords
+    taboo = []
 
-    def warehouselimits(warehouse):
-        X,Y=zip(*warehouse.walls)
-        height=max(Y)-min(Y)
-        width = max(X)-min(X)
-        return (height,width)
+    # Work out warehouse limits
+    X, Y = zip(*warehouse.walls)
+    height = max(Y) - min(Y)
+    width = max(X) - min(X)
 
-    #Identify taboo cells via rule 1:
+    # Identify taboo cells via rule 1:
     # Rule 1: if a cell is a corner inside the warehouse and not a target,
-    #then it is a taboo cell.
+    # then it is a taboo cell.
 
-    #Work out if a wall is a corner
+    # Work out if a wall is a corner
 
     def itsacorner(coord, warehouse):
-        #its a corner if it is in walls and
+        # its a corner if it is in walls and
         # there are walls to the top left, top right, bottom left,
         # or bottom right of this cell
 
-        #x+1, y+1 bottom right
-        #Condition if its a corner
-        x=coord[0]
-        y=coord[1]
+        # x+1, y+1 bottom right
+        # Condition if its a corner
+        x = coord[0]
+        y = coord[1]
         # Hemmed by walls top and left
-        if ((x-1, y) in warehouse.walls and (x, y-1) in warehouse.walls):
-                return True
+        if ((x - 1, y) in warehouse.walls and (x, y - 1) in warehouse.walls):
+            return True
 
         # Hemmed by walls top and right
-        if ((x+1,y) in warehouse.walls and (x, y-1) in warehouse.walls):
-                return True
+        if ((x + 1, y) in warehouse.walls and (x, y - 1) in warehouse.walls):
+            return True
 
         # Hemmed by walls bottom and left
-        if ((x-1, y) in warehouse.walls and (x, y+1) in warehouse.walls):
-                return True
+        if ((x - 1, y) in warehouse.walls and (x, y + 1) in warehouse.walls):
+            return True
 
         # Hemmed by walls bottom and right
-        if ((x+1, y) in warehouse.walls and (x+1, y+1) in warehouse.walls):
-                return True
+        if ((x + 1, y) in warehouse.walls and (x, y + 1) in warehouse.walls):
+            return True
 
         return False
 
-    #Put warehouse into a list by \n
-    warehouseinlines=str(warehouse).split("\n")
-    #Create a coordinate list of empty space cells
+    # Put warehouse into a list by \n
+    warehouseinlines = str(warehouse).split("\n")
+    # Create a coordinate list of empty space cells
     emptyspace = list(sokoban.find_2D_iterator(warehouseinlines, " "))
+
+
+    #Need to write a function that can determine if cell is in maze or not
+    #Will be similar to canwegothere
+    def inmaze(coord, warehouse):
+        wecangothere=[]
+        start=warehouse.worker
+
+        return False
 
     for i in emptyspace:
         if itsacorner(i, warehouse) and i not in warehouse.targets:
             taboo.append(i)
 
-    return taboo
-
 
     #Identify taboo cells via rule 2:
-     #Rule 2: all the cells between two corners inside the warehouse along a
+    #Rule 2: all the cells between two corners inside the warehouse along a
     #wall are taboo if none of these cells is a target.
 
+    #Right now taboo only contains corners
+    rule2taboos = []
+    for i in taboo:
+        x = i[0]
+        y = i[1]
+        xoriginal=x
+        yoriginal=y
 
-    raise NotImplementedError()
+
+        # New plan, check each tile at a time if it is a target. If it is not and has a wall behind it
+        # mark potential taboo, move to next tile.
+        # Check x right direction
+        x+=1 #So as to not check the same tile again
+        potentialtaboos = []
+        while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (x, y) in emptyspace:
+            #Check if there is a wall on top or beneath
+            if (x, y - 1) in warehouse.walls or (x, y + 1) in warehouse.walls:
+                potentialtaboos.append((x, y))
+
+            if itsacorner((x, y), warehouse) and potentialtaboos != []:
+                rule2taboos.extend(potentialtaboos)
+                potentialtaboos=[]
+
+            x += 1
+
+        # Check x left direction
+        x=xoriginal-1
+        potentialtaboos = []
+        while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (
+            x, y) in emptyspace:
+            # Check if there is a wall on top or beneath
+            if (x, y - 1) in warehouse.walls or (x, y + 1) in warehouse.walls:
+                potentialtaboos.append((x, y))
+
+            if itsacorner((x, y), warehouse) and potentialtaboos != []:
+                rule2taboos.extend(potentialtaboos)
+                potentialtaboos = []
+
+            x -= 1
+
+        # Check y down direction
+        x=xoriginal
+        y=yoriginal+1
+        potentialtaboos = []
+        while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (x, y) in emptyspace:
+            #Check if there is wall to the left or the right
+            if (x - 1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
+                potentialtaboos.append((x, y))
+
+            if itsacorner((x,y), warehouse) and potentialtaboos != []:
+                rule2taboos.extend(potentialtaboos)
+                potentialtaboos = []
+            y += 1
+
+        #Check y up direction
+        y=yoriginal-1
+        potentialtaboos = []
+        while (x, y ) not in warehouse.walls and (x, y) not in warehouse.targets and (
+        x, y) in emptyspace:
+            # Check if there is wall to the left or the right
+            if (x-1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
+                potentialtaboos.append((x,y))
+
+            if itsacorner((x,y), warehouse) and potentialtaboos != []:
+                rule2taboos.extend(potentialtaboos)
+                potentialtaboos = []
+            y -= 1
+
+    taboo.extend(rule2taboos)
+
+    #Finally, make the new string with the taboo tiles marked
+    #Shamelessly rip the in built string maker from warehouse
+    X, Y = zip(*warehouse.walls)
+    x_size, y_size = 1 + max(X), 1 + max(Y)
+
+    vis = [[" "] * x_size for y in range(y_size)]
+    for (x, y) in warehouse.walls:
+        vis[y][x] = "#"
+    for (x, y) in taboo:
+        vis[y][x] = "X"
+
+    return "\n".join(["".join(line) for line in vis])
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
