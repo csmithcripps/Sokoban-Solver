@@ -1,4 +1,3 @@
-
 '''
 
     2019 CAB320 Sokoban assignment
@@ -24,19 +23,18 @@ import search
 
 import sokoban
 
-
-
 #  Global Variables - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-MOVEMENTS = {"Up"   : ( 0,-1),
-             "Down" : ( 0, 1),
-             "Left" : (-1, 0),
-             "Right": ( 1, 0)}
+MOVEMENTS = {"Up": (0, -1),
+             "Down": (0, 1),
+             "Left": (-1, 0),
+             "Right": (1, 0)}
 
-UP    = MOVEMENTS["Up"]
-DOWN  = MOVEMENTS["Down"]
-LEFT  = MOVEMENTS["Left"]
+UP = MOVEMENTS["Up"]
+DOWN = MOVEMENTS["Down"]
+LEFT = MOVEMENTS["Left"]
 RIGHT = MOVEMENTS["Right"]
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -47,7 +45,9 @@ def my_team():
     of triplet of the form (student_number, first_name, last_name)
 
     '''
-    return [ (9945008, 'Cody', 'Cripps'), (10283391, 'Faith', 'Lim'), (10411551, 'Mai', 'Bernt') ]
+    return [(9945008, 'Cody', 'Cripps'), (10283391, 'Faith', 'Lim'), (10411551, 'Mai', 'Bernt')]
+
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -79,8 +79,8 @@ def taboo_cells(warehouse):
 
     # Work out warehouse limits
     X, Y = zip(*warehouse.walls)
-    height = max(Y) - min(Y)
-    width = max(X) - min(X)
+    height = max(Y) - min(Y)+1
+    width = max(X) - min(X)+1
 
     # Identify taboo cells via rule 1:
     # Rule 1: if a cell is a corner inside the warehouse and not a target,
@@ -120,54 +120,88 @@ def taboo_cells(warehouse):
     # Create a coordinate list of empty space cells
     emptyspace = list(sokoban.find_2D_iterator(warehouseinlines, " "))
 
+    # Need to write a function that can determine if cell is in maze or not
+    # Will be similar to canwegothere
 
-    #Need to write a function that can determine if cell is in maze or not
-    #Will be similar to canwegothere
     def inmaze(coord, warehouse):
-        wecangothere=[]
-        start=warehouse.worker
+        xoriginal = coord[0]
+        yoriginal = coord[1]
+        right = False
+        left = False
+        top = False
+        bottom = False
+        x = xoriginal+1
+        y = yoriginal
+        # Check right
+        while x < width:
+            if (x, y) in warehouse.walls:
+                right = True
+                break
+            x += 1
+        # Check left
+        x = xoriginal-1
+        while x > -1:
+            if (x, y) in warehouse.walls:
+                left = True
+                break
+            x -= 1
 
-        return False
+        y = yoriginal+1
+        x = xoriginal
+        # Check top
+        while y < height:
+            if (x, y) in warehouse.walls:
+                top = True
+                break
+            y += 1
+        # Check bottom
+        y = yoriginal-1
+        x = xoriginal
+        while y > -1:
+            if (x, y) in warehouse.walls:
+                bottom = True
+                break
+            y -= 1
+
+        return left and right and top and bottom
 
     for i in emptyspace:
-        if itsacorner(i, warehouse) and i not in warehouse.targets:
+        if itsacorner(i, warehouse) and i not in warehouse.targets and inmaze(i, warehouse):
             taboo.append(i)
 
+    # Identify taboo cells via rule 2:
+    # Rule 2: all the cells between two corners inside the warehouse along a
+    # wall are taboo if none of these cells is a target.
 
-    #Identify taboo cells via rule 2:
-    #Rule 2: all the cells between two corners inside the warehouse along a
-    #wall are taboo if none of these cells is a target.
-
-    #Right now taboo only contains corners
+    # Right now taboo only contains corners
     rule2taboos = []
     for i in taboo:
         x = i[0]
         y = i[1]
-        xoriginal=x
-        yoriginal=y
-
+        xoriginal = x
+        yoriginal = y
 
         # New plan, check each tile at a time if it is a target. If it is not and has a wall behind it
         # mark potential taboo, move to next tile.
         # Check x right direction
-        x+=1 #So as to not check the same tile again
+        x += 1  # So as to not check the same tile again
         potentialtaboos = []
         while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (x, y) in emptyspace:
-            #Check if there is a wall on top or beneath
+            # Check if there is a wall on top or beneath
             if (x, y - 1) in warehouse.walls or (x, y + 1) in warehouse.walls:
                 potentialtaboos.append((x, y))
 
             if itsacorner((x, y), warehouse) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
-                potentialtaboos=[]
+                potentialtaboos = []
 
             x += 1
 
         # Check x left direction
-        x=xoriginal-1
+        x = xoriginal - 1
         potentialtaboos = []
         while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (
-            x, y) in emptyspace:
+                x, y) in emptyspace:
             # Check if there is a wall on top or beneath
             if (x, y - 1) in warehouse.walls or (x, y + 1) in warehouse.walls:
                 potentialtaboos.append((x, y))
@@ -179,37 +213,37 @@ def taboo_cells(warehouse):
             x -= 1
 
         # Check y down direction
-        x=xoriginal
-        y=yoriginal+1
+        x = xoriginal
+        y = yoriginal + 1
         potentialtaboos = []
         while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (x, y) in emptyspace:
-            #Check if there is wall to the left or the right
+            # Check if there is wall to the left or the right
             if (x - 1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
                 potentialtaboos.append((x, y))
 
-            if itsacorner((x,y), warehouse) and potentialtaboos != []:
+            if itsacorner((x, y), warehouse) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
                 potentialtaboos = []
             y += 1
 
-        #Check y up direction
-        y=yoriginal-1
+        # Check y up direction
+        y = yoriginal - 1
         potentialtaboos = []
-        while (x, y ) not in warehouse.walls and (x, y) not in warehouse.targets and (
-        x, y) in emptyspace:
+        while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (
+                x, y) in emptyspace:
             # Check if there is wall to the left or the right
-            if (x-1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
-                potentialtaboos.append((x,y))
+            if (x - 1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
+                potentialtaboos.append((x, y))
 
-            if itsacorner((x,y), warehouse) and potentialtaboos != []:
+            if itsacorner((x, y), warehouse) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
                 potentialtaboos = []
             y -= 1
 
     taboo.extend(rule2taboos)
 
-    #Finally, make the new string with the taboo tiles marked
-    #Shamelessly rip the in built string maker from warehouse
+    # Finally, make the new string with the taboo tiles marked
+    # Shamelessly rip the in built string maker from warehouse
     X, Y = zip(*warehouse.walls)
     x_size, y_size = 1 + max(X), 1 + max(Y)
 
@@ -220,6 +254,7 @@ def taboo_cells(warehouse):
         vis[y][x] = "X"
 
     return "\n".join(["".join(line) for line in vis])
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -249,8 +284,7 @@ class SokobanPuzzle(search.Problem):
 
     '''
 
-
-    def __init__(self, warehouse, allow_taboo_push = False, macro = False):
+    def __init__(self, warehouse, allow_taboo_push=False, macro=False):
         # Initialise SokobanPuzzle Problem
 
         # Load Problemspace (Warehouse)
@@ -261,7 +295,6 @@ class SokobanPuzzle(search.Problem):
         self.boxes = tuple(warehouse.boxes)
         self.worker = tuple(warehouse.worker)
         self.targets = tuple(warehouse.targets)
-
 
     def result(self, action):
 
@@ -276,11 +309,11 @@ class SokobanPuzzle(search.Problem):
         what type of list of actions is to be returned.
         """
         actions = []
-        
+
         if self.macro:
             return actions
         else:
-            for movement in MOVEMENTS:    
+            for movement in MOVEMENTS:
                 # Apply given movement to the position of the worker
                 action = (state.worker[0] + MOVEMENTS[movement][0], state.worker[1] + MOVEMENTS[movement][1])
                 # If taboo cells are not allowed
@@ -299,11 +332,12 @@ class SokobanPuzzle(search.Problem):
                         continue
                 # If no constraints are violated add the action to the list
                 actions.append(action)
-        
+
         return actions
 
-    def h(self,action):
+    def h(self, action):
         raise NotImplementedError
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -334,7 +368,7 @@ def check_action_seq(warehouse, action_seq):
     for action in action_seq:
         # Apply given movement to the position of the worker
         move = (warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
-         # If the action results in a wall position the action is illegal
+        # If the action results in a wall position the action is illegal
         if move in warehouse.walls:
             return 'Failure'
         # If the action pushes a box
@@ -344,7 +378,7 @@ def check_action_seq(warehouse, action_seq):
             # If the box is pushed into a wall or another box the action is illegal
             if box_movement in warehouse.walls or box_movement in warehouse.boxes:
                 return 'Failure'
-        
+
         # Apply the actions to the warehouse
         warehouse.worker = (warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
         # If worker pushes a box
@@ -352,7 +386,8 @@ def check_action_seq(warehouse, action_seq):
             for i in range(0, len(warehouse.boxes)):
                 # Find the box and push it in the given direction
                 if warehouse.worker == warehouse.boxes[i]:
-                    warehouse.boxes[i] = (warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
+                    warehouse.boxes[i] = (
+                    warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
 
     return warehouse.__str__()
 
@@ -374,7 +409,6 @@ def solve_sokoban_elem(warehouse):
             If the puzzle is already in a goal state, simply return []
     '''
 
-
     puzzle = SokobanPuzzle(warehouse)
     puzzle.macro = False
 
@@ -384,6 +418,7 @@ def solve_sokoban_elem(warehouse):
         return result
     else:
         return 'Impossible'
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -402,6 +437,7 @@ def can_go_there(warehouse, dst):
     ##         "INSERT YOUR CODE HERE"
 
     raise NotImplementedError()
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -434,6 +470,7 @@ def solve_sokoban_macro(warehouse):
     else:
         return 'Impossible'
 
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def taboo_cells_positions(self):
@@ -448,3 +485,11 @@ def taboo_cells_positions(self):
             if row > 0:
                 row = -row
             yield (row, column)
+
+
+from sokoban import Warehouse
+
+if __name__ == "__main__":
+    wh=Warehouse()
+    wh.load_warehouse("./warehouses/warehouse_19.txt")
+    taboo = taboo_cells(wh)
