@@ -286,19 +286,73 @@ class SokobanPuzzle(search.Problem):
 
     def __init__(self, warehouse, allow_taboo_push=False, macro=False):
         # Initialise SokobanPuzzle Problem
-
-        # Load Problemspace (Warehouse)
-        self.Warehouse = warehouse
-        self.allow_taboo_push = allow_taboo_push
         self.macro = macro
-        self.walls = tuple(warehouse.walls)
-        self.boxes = tuple(warehouse.boxes)
-        self.worker = tuple(warehouse.worker)
-        self.targets = tuple(warehouse.targets)
+        self.allow_taboo_push = allow_taboo_push
+
+        #-- Load Problemspace (Warehouse) --#
+        #save initial state
+        self.initial = warehouse
+
+        # set current state
+        self.state = warehouse
+        self.boxes = self.state.boxes
+
+        self.goal = warehouse.copy()
+        self.goal.boxes = self.goal.targets
+
+        self.original_boxes = self.boxes
+        self.original_worker = self.goal.worker
+
+    def resultElem(self, action):
+        state = self.state
+        # return state with the box and worker moved after action
+        return state
+
+    def resultMacro(self, action):
+        '''
+        Move boxes based on a macro action
+
+        @param action: a tuple of box location and direction
+            in the form ((x,y),"direction")
+
+        @return
+            a warehouse object which boxes was moved
+        '''
+        state = self.state
+
+        box_previous_location = action[0]
+
+        state.boxes.remove(box_previous_location)
+        state.worker = box_previous_location
+        moveDirection = action[1]
+        #Add box back in at action[1] from the previous location.
+        state.boxes.append(box_previous_location + MOVEMENTS[moveDirection])
+
+        return state
 
     def result(self, action):
+        # Choose which result function to use
 
-        raise NotImplementedError
+        if self.macro:
+            return self.resultMacro(action)
+        else:
+            return self.resultElem(action)
+
+    def goal_test(self, state):
+        """
+        Check if the set that is the current box positions, aligns with
+            the set that is the boxes in the goal state
+        Return True if the sets align (boxes at targets).
+        """
+        return set(self.goal.boxes) == set(state.boxes)
+
+    def path_cost(self, c, state1, action, state2):
+        """Return the cost of a solution path that arrives at state2 from
+        state1 via action, assuming cost c to get up to state1. If the problem
+        is such that the path doesn't matter, this function will only look at
+        state2.  If the path does matter, it will consider c and maybe state1
+        and action. The default method costs 1 for every step in the path."""
+        return c + 1
 
     def actions(self, state):
         """
