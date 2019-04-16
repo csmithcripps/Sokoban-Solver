@@ -330,7 +330,7 @@ class SokobanPuzzle(search.Problem):
 
         return state
 
-    def result(self, action):
+    def result(self, state, action):
         # Choose which result function to use
 
         if self.macro:
@@ -389,7 +389,7 @@ class SokobanPuzzle(search.Problem):
                 action = (state.worker[0] + MOVEMENTS[movement][0], state.worker[1] + MOVEMENTS[movement][1])
                 # If taboo cells are not allowed
                 if not self.allow_taboo_push:
-                    if action in taboo_cells_positions():
+                    if action in taboo_cells_positions(state):
                         continue
                 # If the action results in a wall
                 if action in state.walls:
@@ -514,14 +514,16 @@ def solve_sokoban_elem(warehouse):
     '''
 
     puzzle = SokobanPuzzle(warehouse)
-    puzzle.macro = False
+    
+#    if puzzle.goal_test:
+#        return []
 
     result = search.uniform_cost_search(puzzle)
 
     if result:
         return result
     else:
-        return 'Impossible'
+        return ['Impossible']
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -577,8 +579,8 @@ def solve_sokoban_macro(warehouse):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def taboo_cells_positions(self):
-    tc = taboo_cells(self.Warehouse)
+def taboo_cells_positions(warehouse):
+    tc = taboo_cells(warehouse)
     row = 0
     column = 0
     for character in tc:
