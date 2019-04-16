@@ -306,7 +306,7 @@ class SokobanPuzzle(search.Problem):
     def resultElem(self, action):
         state = self.state
         # return state with the box and worker moved after action
-
+        state = check_and_move(state, [action])
         return state
 
     def resultMacro(self, action):
@@ -403,7 +403,7 @@ class SokobanPuzzle(search.Problem):
                     if box_movement in state.walls or box_movement in state.boxes:
                         continue
                 # If no constraints are violated add the action to the list
-                actions.append(action)
+                actions.append(movement)
 
         return actions
 
@@ -411,17 +411,16 @@ class SokobanPuzzle(search.Problem):
             """
             switch based on macro.
             """
-            if self.macro:
-                heur = 0
-                for box in n.state.boxes:
-                    #Find closest target
-                    closest_target = n.state.targets[0]
-                    for target in n.state.targets:
-                        if (manhatten(target, box) < manhatten(closest_target, box)):
-                            closest_target = target
+            heur = 0
+            for box in n.state.boxes:
+                #Find closest target
+                closest_target = n.state.targets[0]
+                for target in n.state.targets:
+                    if (manhatten(target, box) < manhatten(closest_target, box)):
+                        closest_target = target
 
-                    #Update Heuristic
-                    heur = heur + manhatten(closest_target, box)
+                #Update Heuristic
+                heur = heur + manhatten(closest_target, box)
 
             return heur
 
@@ -540,14 +539,11 @@ def solve_sokoban_elem(warehouse):
             If the puzzle is already in a goal state, simply return []
     '''
     puzzle = SokobanPuzzle(warehouse)
-    
-    if puzzle.goal_test(warehouse):
-        return []
 
-    result = search.uniform_cost_search(puzzle)
-    
+    result = search.astar_graph_search(puzzle)
+
     if result:
-        return result
+        return result.path
     else:
         return ['Impossible']
 
@@ -598,7 +594,7 @@ def solve_sokoban_macro(warehouse):
     result = search.uniform_cost_search(puzzle)
 
     if result:
-        return result
+        return result.path
     else:
         return 'Impossible'
 

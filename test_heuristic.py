@@ -38,8 +38,9 @@ def manhatten(p1, p2):
 
 
 wh = Warehouse()
-wh.load_warehouse("./warehouses/warehouse_07.txt")
-test = tester(wh, True, True)
-heur = test.h(test)
+wh.load_warehouse("./warehouses/warehouse_11.txt")
+test = tester(wh, True, False)
+# heur = test.h(test)
+actions = test.actions(test.state)
 print(wh)
-print(heur)
+print(actions)
