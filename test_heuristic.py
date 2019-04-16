@@ -37,10 +37,18 @@ def manhatten(p1, p2):
     return abs((p1[0] - p2[0])) + abs((p1[1] - p2[1]))
 
 
+
+puzzle_t1 ='#######\n# @$. #\n#######'
 wh = Warehouse()
-wh.load_warehouse("./warehouses/warehouse_11.txt")
-test = tester(wh, True, False)
+wh.extract_locations(puzzle_t1.split(sep='\n'))
+# test = tester(wh, True, False)
 # heur = test.h(test)
-actions = test.actions(test.state)
+# actions = test.actions(test.initial)
+# print(wh.targets)
 print(wh)
-print(actions)
+# res = test.result(test.initial,"Right")
+# print(actions)
+# print(res)
+
+result = solve_sokoban_elem(wh)
+print(result)

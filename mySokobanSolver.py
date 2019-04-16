@@ -30,10 +30,6 @@ MOVEMENTS = {"Up": (0, -1),
              "Left": (-1, 0),
              "Right": (1, 0)}
 
-UP = MOVEMENTS["Up"]
-DOWN = MOVEMENTS["Down"]
-LEFT = MOVEMENTS["Left"]
-RIGHT = MOVEMENTS["Right"]
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -293,23 +289,18 @@ class SokobanPuzzle(search.Problem):
         #save initial state
         self.initial = warehouse
 
-        # set current state
-        self.state = warehouse
-        self.boxes = self.state.boxes
-
         self.goal = warehouse.copy()
         self.goal.boxes = self.goal.targets
 
-        self.original_boxes = self.boxes
-        self.original_worker = self.goal.worker
 
-    def resultElem(self, action):
-        state = self.state
+    def resultElem(self, state, action):
+        new_state = state.copy()
         # return state with the box and worker moved after action
-        state = check_and_move(state, [action])
-        return state
+        new_state = check_and_move(new_state, [action])
+        # print(new_state)
+        return new_state
 
-    def resultMacro(self, action):
+    def resultMacro(self, state, action):
         '''
         Move boxes based on a macro action
 
@@ -319,7 +310,7 @@ class SokobanPuzzle(search.Problem):
         @return
             a warehouse object which boxes was moved
         '''
-        state = self.state
+        state = self.state.copy()
 
         box_previous_location = action[0]
 
@@ -335,9 +326,9 @@ class SokobanPuzzle(search.Problem):
         # Choose which result function to use
 
         if self.macro:
-            return self.resultMacro(action)
+            return self.resultMacro(state,action)
         else:
-            return self.resultElem(action)
+            return self.resultElem(state,action)
 
     def goal_test(self, state):
         """
@@ -409,7 +400,7 @@ class SokobanPuzzle(search.Problem):
 
     def h(self, n):
             """
-            switch based on macro.
+            Heuristic
             """
             heur = 0
             for box in n.state.boxes:
@@ -421,7 +412,7 @@ class SokobanPuzzle(search.Problem):
 
                 #Update Heuristic
                 heur = heur + manhatten(closest_target, box)
-
+            # print("heuristic: " + str(heur))
             return heur
 
 
@@ -466,7 +457,6 @@ def check_and_move(warehouse, action_seq):
                the sequence of actions.  This must be the same string as the
                string returned by the method  Warehouse.__str__()
     '''
-
     for action in action_seq:
         # Apply given movement to the position of the worker
         move = (warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
@@ -543,7 +533,8 @@ def solve_sokoban_elem(warehouse):
     result = search.astar_graph_search(puzzle)
 
     if result:
-        return result.path
+        print(result)
+        return result.solution()
     else:
         return ['Impossible']
 
@@ -594,7 +585,7 @@ def solve_sokoban_macro(warehouse):
     result = search.uniform_cost_search(puzzle)
 
     if result:
-        return result.path
+        return result.solution()
     else:
         return 'Impossible'
 
