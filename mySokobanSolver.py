@@ -49,6 +49,70 @@ def my_team():
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def getemptyspace(warehouse, includeboxes):
+    # Put warehouse into a list by \n
+    warehouseinlines = str(warehouse).split("\n")
+    # Create a coordinate list of empty space cells
+    emptyspace = list(sokoban.find_2D_iterator(warehouseinlines, " "))
+
+    i=0
+    while i < len(emptyspace):
+        coord=emptyspace[i]
+        if (not inmaze(coord, warehouse, includeboxes)):
+            emptyspace.remove(coord)
+            i-=1
+        i+=1
+
+    return emptyspace
+
+
+def inmaze(coord, warehouse, includeboxes):
+    walls = warehouse.walls
+    if includeboxes:
+        walls.extend(warehouse.boxes)
+    # Work out warehouse limits
+    X, Y = zip(*walls)
+    height = max(Y) - min(Y) + 1
+    width = max(X) - min(X) + 1
+    xoriginal = coord[0]
+    yoriginal = coord[1]
+    right = False
+    left = False
+    top = False
+    bottom = False
+    x = xoriginal + 1
+    y = yoriginal
+    # Check right
+    while x < width:
+        if (x, y) in walls:
+            right = True
+            break
+        x += 1
+    # Check left
+    x = xoriginal - 1
+    while x > -1:
+        if (x, y) in walls:
+            left = True
+            break
+        x -= 1
+    y = yoriginal + 1
+    x = xoriginal
+    # Check top
+    while y < height:
+        if (x, y) in walls:
+            top = True
+            break
+        y += 1
+    # Check bottom
+    y = yoriginal - 1
+    x = xoriginal
+    while y > -1:
+        if (x, y) in walls:
+            bottom = True
+            break
+        y -= 1
+
+    return left and right and top and bottom
 
 
 def taboo_cells(warehouse):
@@ -76,11 +140,6 @@ def taboo_cells(warehouse):
 
     # Placeholder to hold taboo coords
     taboo = []
-
-    # Work out warehouse limits
-    X, Y = zip(*warehouse.walls)
-    height = max(Y) - min(Y)+1
-    width = max(X) - min(X)+1
 
     # Identify taboo cells via rule 1:
     # Rule 1: if a cell is a corner inside the warehouse and not a target,
@@ -115,58 +174,10 @@ def taboo_cells(warehouse):
 
         return False
 
-    # Put warehouse into a list by \n
-    warehouseinlines = str(warehouse).split("\n")
-    # Create a coordinate list of empty space cells
-    emptyspace = list(sokoban.find_2D_iterator(warehouseinlines, " "))
-
-    # Need to write a function that can determine if cell is in maze or not
-    # Will be similar to canwegothere
-
-    def inmaze(coord, warehouse):
-        xoriginal = coord[0]
-        yoriginal = coord[1]
-        right = False
-        left = False
-        top = False
-        bottom = False
-        x = xoriginal+1
-        y = yoriginal
-        # Check right
-        while x < width:
-            if (x, y) in warehouse.walls:
-                right = True
-                break
-            x += 1
-        # Check left
-        x = xoriginal-1
-        while x > -1:
-            if (x, y) in warehouse.walls:
-                left = True
-                break
-            x -= 1
-
-        y = yoriginal+1
-        x = xoriginal
-        # Check top
-        while y < height:
-            if (x, y) in warehouse.walls:
-                top = True
-                break
-            y += 1
-        # Check bottom
-        y = yoriginal-1
-        x = xoriginal
-        while y > -1:
-            if (x, y) in warehouse.walls:
-                bottom = True
-                break
-            y -= 1
-
-        return left and right and top and bottom
+    emptyspace = getemptyspace(warehouse, False)
 
     for i in emptyspace:
-        if itsacorner(i, warehouse) and i not in warehouse.targets and inmaze(i, warehouse):
+        if itsacorner(i, warehouse) and i not in warehouse.targets:
             taboo.append(i)
 
     # Identify taboo cells via rule 2:
@@ -387,7 +398,7 @@ def check_action_seq(warehouse, action_seq):
                 # Find the box and push it in the given direction
                 if warehouse.worker == warehouse.boxes[i]:
                     warehouse.boxes[i] = (
-                    warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
+                        warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
 
     return warehouse.__str__()
 
@@ -434,11 +445,51 @@ def can_go_there(warehouse, dst):
       False otherwise
     '''
 
-    ##         "INSERT YOUR CODE HERE"
+    walls = warehouse.walls
+    # because we can't move boxes they are basically walls
+    walls.extend(warehouse.boxes)
+    worker = warehouse.worker
+    explored = []
 
-    raise NotImplementedError()
+    fullyexplored=False
 
+    explored.append(worker)
 
+    # Keep checking the 4 squares around tile in question, if you can go to them,
+    # add to explored. Keep going back to explored and doing the test on each one of them
+    def explore(coord):
+        x = coord[0]
+        y = coord[1]
+
+        # explore tile on top
+        if (x, y - 1) not in walls and (x, y - 1) not in explored:
+            explored.append((x, y - 1))
+
+        # explore tile on beneath
+        if (x, y + 1) not in walls and (x, y + 1) not in explored:
+            explored.append((x, y + 1))
+
+        # explore tile on left
+        if (x - 1, y) not in walls and (x - 1, y) not in explored:
+            explored.append((x - 1, y))
+
+        # explore tile on right
+        if (x + 1, y) not in walls and (x + 1, y) not in explored:
+            explored.append((x + 1, y))
+
+    # while its not the tile we're looking for or we've explored every single tile.
+    while not fullyexplored:
+        lengthofexplored=len(explored)
+        for i in explored:
+            explore(i)
+            if dst in explored:
+                return True
+            #if explored hasn't grown, it means there is no where else to explore
+            #meaning it's fully explored
+            if lengthofexplored==len(explored):
+                fullyexplored=True
+
+    return False
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def solve_sokoban_macro(warehouse):
@@ -490,6 +541,7 @@ def taboo_cells_positions(self):
 from sokoban import Warehouse
 
 if __name__ == "__main__":
-    wh=Warehouse()
+    wh = Warehouse()
     wh.load_warehouse("./warehouses/warehouse_19.txt")
     taboo = taboo_cells(wh)
+    can_go_there(wh, (0,1))
