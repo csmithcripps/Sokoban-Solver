@@ -407,12 +407,16 @@ class SokobanPuzzle(search.Problem):
         return actions
 
     def h(self, action):
+
         raise NotImplementedError
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def check_action_seq(warehouse, action_seq):
+def distanceTransform(warehouse):
+
+
+def check_and_move(warehouse, action_seq):
     '''
 
     Determine if the sequence of actions listed in 'action_seq' is legal or not.
@@ -459,6 +463,34 @@ def check_action_seq(warehouse, action_seq):
                 if warehouse.worker == warehouse.boxes[i]:
                     warehouse.boxes[i] = (
                     warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
+
+    return warehouse
+
+
+def check_action_seq(warehouse, action_seq):
+    '''
+
+    Determine if the sequence of actions listed in 'action_seq' is legal or not.
+
+    Important notes:
+      - a legal sequence of actions does not necessarily solve the puzzle.
+      - an action is legal even if it pushes a box onto a taboo cell.
+
+    @param warehouse: a valid Warehouse object
+
+    @param action_seq: a sequence of legal actions.
+           For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
+
+    @return
+        The string 'Failure', if one of the action was not successul.
+           For example, if the agent tries to push two boxes at the same time,
+                        or push one box into a wall.
+        Otherwise, if all actions were successful, return
+               A string representing the state of the puzzle after applying
+               the sequence of actions.  This must be the same string as the
+               string returned by the method  Warehouse.__str__()
+    '''
+    warehouse = check_and_move(warehouse, action_seq)
 
     return warehouse.__str__()
 
