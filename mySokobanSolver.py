@@ -406,12 +406,38 @@ class SokobanPuzzle(search.Problem):
 
         return actions
 
-    def h(self, action):
+    def h(self, n):
+    	"""
+    	switch based on macro.
+    	"""
+        if self.macro:
+            heur = 0
+            for box in n.state.boxes:
+                #Find closest target
+                closest_target = n.state.targets[0]
+                for target in n.state.targets:
+                    if (manhatten(target, box) < manhatten(closest_target, box)):
+                        closest_target = target
 
-        raise NotImplementedError
+                #Update Heuristic
+                heur = heur + manhatten(closest_target, box)
+
+    	return heur
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def manhatten(p1, p2):
+    """
+    Computes the manhatten distance between a set of points
+
+    inputs:
+        2 locations as tuples
+
+    return:
+        Manhatten distance between the input locations
+    """
+    return abs((p1[0] - p2[0])) + abs((p1[1] - p2[1]))
 
 def distanceTransform(warehouse):
     return warehouse
@@ -514,7 +540,7 @@ def solve_sokoban_elem(warehouse):
     '''
 
     puzzle = SokobanPuzzle(warehouse)
-    
+
 #    if puzzle.goal_test:
 #        return []
 
