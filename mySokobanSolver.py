@@ -27,8 +27,8 @@ import sokoban
 
 MOVEMENTS = {"Up": (0, -1),
              "Down": (0, 1),
-             "Left": (-1, 0),
-             "Right": (1, 0)}
+             "Right": (1, 0),
+             "Left": (-1, 0)}
 
 
 
@@ -475,12 +475,14 @@ def check_and_move(warehouse, action_seq):
         warehouse.worker = (warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
         # If worker pushes a box
         if warehouse.worker in warehouse.boxes:
-            for i in range(0, len(warehouse.boxes)):
-                # Find the box and push it in the given direction
-                if warehouse.worker == warehouse.boxes[i]:
-                    warehouse.boxes[i] = (
-                    warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
-
+            # for i in range(0, len(warehouse.boxes)):
+            #     # Find the box and push it in the given direction
+            #     if warehouse.worker == warehouse.boxes[i]:
+            #         warehouse.boxes[i] = (
+            #         warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
+            warehouse.boxes.remove(warehouse.worker)
+            warehouse.boxes.append((warehouse.worker[0] + MOVEMENTS[action][0],\
+                                     warehouse.worker[1] + MOVEMENTS[action][1]))
     return warehouse
 
 

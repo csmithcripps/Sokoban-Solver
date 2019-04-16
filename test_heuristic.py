@@ -38,7 +38,7 @@ def manhatten(p1, p2):
 
 
 
-puzzle_t1 ='#######\n# @$. #\n#######'
+puzzle_t1 ='#######\n#.$@ #\n#######'
 wh = Warehouse()
 wh.extract_locations(puzzle_t1.split(sep='\n'))
 # test = tester(wh, True, False)
