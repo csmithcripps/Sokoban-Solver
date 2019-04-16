@@ -365,6 +365,23 @@ class SokobanPuzzle(search.Problem):
         actions = []
 
         if self.macro:
+            for box in state.boxes:
+                if can_go_there(state, box):
+                    for movement in MOVEMENTS:
+                        # Apply given movement to the position of the box
+                        action = (box[0] + MOVEMENTS[movement][0], box[1] + MOVEMENTS[movement][1])
+                        # If taboo cells are not allowed
+                        if not self.allow_taboo_push:
+                            if action in taboo_cells_positions():
+                                continue
+                        # If the action results in a wall position the action is illegal
+                        if action in state.walls:
+                            continue
+                        # If the action results in another box, the action is illegal
+                        if action in state.boxes:
+                            continue
+                        # If no constraints are violated add the box position and the movement to the list
+                        actions.append((box, movement))
             return actions
         else:
             for movement in MOVEMENTS:
