@@ -49,6 +49,8 @@ def my_team():
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+#returns the empty spaces in the maze
 def getemptyspace(warehouse, includeboxes):
     # Put warehouse into a list by \n
     warehouseinlines = str(warehouse).split("\n")
@@ -65,7 +67,8 @@ def getemptyspace(warehouse, includeboxes):
 
     return emptyspace
 
-
+#Works out if a tile is in the maze
+#Returns true if it is, false if not
 def inmaze(coord, warehouse, includeboxes):
     walls = warehouse.walls
     if includeboxes:
