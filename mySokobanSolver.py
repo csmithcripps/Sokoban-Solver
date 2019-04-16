@@ -539,14 +539,13 @@ def solve_sokoban_elem(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
     '''
-
     puzzle = SokobanPuzzle(warehouse)
-
-#    if puzzle.goal_test:
-#        return []
+    
+    if puzzle.goal_test(warehouse):
+        return []
 
     result = search.uniform_cost_search(puzzle)
-
+    
     if result:
         return result
     else:
