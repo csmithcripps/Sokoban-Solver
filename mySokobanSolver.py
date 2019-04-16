@@ -306,6 +306,7 @@ class SokobanPuzzle(search.Problem):
     def resultElem(self, action):
         state = self.state
         # return state with the box and worker moved after action
+
         return state
 
     def resultMacro(self, action):
@@ -407,22 +408,22 @@ class SokobanPuzzle(search.Problem):
         return actions
 
     def h(self, n):
-    	"""
-    	switch based on macro.
-    	"""
-        if self.macro:
-            heur = 0
-            for box in n.state.boxes:
-                #Find closest target
-                closest_target = n.state.targets[0]
-                for target in n.state.targets:
-                    if (manhatten(target, box) < manhatten(closest_target, box)):
-                        closest_target = target
+            """
+            switch based on macro.
+            """
+            if self.macro:
+                heur = 0
+                for box in n.state.boxes:
+                    #Find closest target
+                    closest_target = n.state.targets[0]
+                    for target in n.state.targets:
+                        if (manhatten(target, box) < manhatten(closest_target, box)):
+                            closest_target = target
 
-                #Update Heuristic
-                heur = heur + manhatten(closest_target, box)
+                    #Update Heuristic
+                    heur = heur + manhatten(closest_target, box)
 
-    	return heur
+            return heur
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
