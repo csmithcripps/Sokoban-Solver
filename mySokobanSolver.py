@@ -414,6 +414,7 @@ class SokobanPuzzle(search.Problem):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def distanceTransform(warehouse):
+    return warehouse
 
 
 def check_and_move(warehouse, action_seq):
