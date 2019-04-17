@@ -586,17 +586,57 @@ def can_go_there(warehouse, dst):
     '''
     Determine whether the worker can walk to the cell dst=(row,column)
     without pushing any box.
-
     @param warehouse: a valid Warehouse object (from sokoban.py)
-
     @return
       True if the worker can walk to cell dst=(row,column) without pushing any box
       False otherwise
     '''
 
-    ##         "INSERT YOUR CODE HERE"
+    walls = warehouse.walls
+    # because we can't move boxes they are basically walls
+    walls.extend(warehouse.boxes)
+    worker = warehouse.worker
+    explored = []
 
-    raise NotImplementedError()
+    fullyexplored=False
+
+    explored.append(worker)
+
+    # Keep checking the 4 squares around tile in question, if you can go to them,
+    # add to explored. Keep going back to explored and doing the test on each one of them
+    def explore(coord):
+        x = coord[0]
+        y = coord[1]
+
+        # explore tile on top
+        if (x, y - 1) not in walls and (x, y - 1) not in explored:
+            explored.append((x, y - 1))
+
+        # explore tile on beneath
+        if (x, y + 1) not in walls and (x, y + 1) not in explored:
+            explored.append((x, y + 1))
+
+        # explore tile on left
+        if (x - 1, y) not in walls and (x - 1, y) not in explored:
+            explored.append((x - 1, y))
+
+        # explore tile on right
+        if (x + 1, y) not in walls and (x + 1, y) not in explored:
+            explored.append((x + 1, y))
+
+    # while its not the tile we're looking for or we've explored every single tile.
+    while not fullyexplored:
+        lengthofexplored=len(explored)
+        for i in explored:
+            explore(i)
+            if dst in explored:
+                return True
+            #if explored hasn't grown, it means there is no where else to explore
+            #meaning it's fully explored
+            if lengthofexplored==len(explored):
+                fullyexplored=True
+
+    return False
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
