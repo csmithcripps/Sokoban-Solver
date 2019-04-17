@@ -280,24 +280,25 @@ class SokobanPuzzle(search.Problem):
 
     '''
 
-    def __init__(self, warehouse, allow_taboo_push=False, macro=False):
+    def __init__(self, warehouse, allow_taboo_push=True, macro=False):
         # Initialise SokobanPuzzle Problem
         self.macro = macro
         self.allow_taboo_push = allow_taboo_push
 
         #-- Load Problemspace (Warehouse) --#
         #save initial state
-        self.initial = warehouse
+        self.initial = warehouse.copy()
 
         self.goal = warehouse.copy()
         self.goal.boxes = self.goal.targets
 
 
     def resultElem(self, state, action):
-        new_state = state.copy()
+        print("    ->Checking action " + str(action))
+        new_state = state.copy(boxes=self.original_boxes,worker=self.original_worker)
         # return state with the box and worker moved after action
         new_state = check_and_move(new_state, [action])
-        # print(new_state)
+        print("      -->Result: " + str(new_state))
         return new_state
 
     def resultMacro(self, state, action):
@@ -310,21 +311,20 @@ class SokobanPuzzle(search.Problem):
         @return
             a warehouse object which boxes was moved
         '''
-        state = self.state.copy()
+        new_state = state.copy()
 
         box_previous_location = action[0]
 
-        state.boxes.remove(box_previous_location)
-        state.worker = box_previous_location
+        new_state.boxes.remove(box_previous_location)
+        new_state.worker = box_previous_location
         moveDirection = action[1]
         #Add box back in at action[1] from the previous location.
-        state.boxes.append(box_previous_location + MOVEMENTS[moveDirection])
+        new_state.boxes.append(box_previous_location + MOVEMENTS[moveDirection])
 
-        return state
+        return new_state
 
     def result(self, state, action):
         # Choose which result function to use
-
         if self.macro:
             return self.resultMacro(state,action)
         else:
@@ -336,7 +336,7 @@ class SokobanPuzzle(search.Problem):
             the set that is the boxes in the goal state
         Return True if the sets align (boxes at targets).
         """
-        return set(self.goal.boxes) == set(state.boxes)
+        return set(self.goal.boxes.copy()) == set(state.boxes.copy())
 
     def path_cost(self, c, state1, action, state2):
         """Return the cost of a solution path that arrives at state2 from
@@ -354,8 +354,12 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
-        actions = []
 
+        self.original_boxes = state.boxes.copy()
+        self.original_worker = state.worker
+        actions = []
+        print("For Warehouse:")
+        print(state)
         if self.macro:
             for box in state.boxes:
                 if can_go_there(state, box):
@@ -395,7 +399,7 @@ class SokobanPuzzle(search.Problem):
                         continue
                 # If no constraints are violated add the action to the list
                 actions.append(movement)
-
+        print("  ->Actions: " + str(actions))
         return actions
 
     def h(self, n):
@@ -433,6 +437,40 @@ def manhatten(p1, p2):
 def distanceTransform(warehouse):
     return warehouse
 
+# def check_and_move(warehouse, action_seq):
+#     '''
+#     Same purpose as check_action_seq function
+#     NB: It does not check if it pushes a box onto a taboo cell.
+
+#     @param warehouse: a Warehouse object
+#     @param action_seq: a list of actions
+
+#     @return
+#         a altered warehouse
+#     '''
+#     wh = warehouse.copy()
+#     for action in action_seq:
+#         actorX, actorY = wh.worker
+
+#         #Look two ahead
+#         forward1 = (actorX + MOVEMENTS[action][0], actorY + MOVEMENTS[action][1])
+#         forward2 = (actorX + 2*MOVEMENTS[action][0], actorY + 2*MOVEMENTS[action][1])
+
+#         #Check whether the worker push walls
+#         if forward1 in wh.walls:
+#             return 'Failure'
+
+#         if forward1 in wh.boxes:
+#             if forward2 in wh.boxes or forward2 in wh.walls:
+#                 #push two boxes or the box has already nearby the wall, faliure
+#                 return 'Failure'
+#             #Only push one box
+#             wh.boxes.remove(forward1)
+#             wh.boxes.append(forward2)
+
+#         wh.worker = forward1
+
+#     return wh
 
 def check_and_move(warehouse, action_seq):
     '''
@@ -531,6 +569,7 @@ def solve_sokoban_elem(warehouse):
             If the puzzle is already in a goal state, simply return []
     '''
     puzzle = SokobanPuzzle(warehouse)
+    puzzle.macro = False
 
     result = search.astar_graph_search(puzzle)
 

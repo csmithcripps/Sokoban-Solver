@@ -41,6 +41,7 @@ def manhatten(p1, p2):
 puzzle_t1 ='#######\n#.$@ #\n#######'
 wh = Warehouse()
 wh.extract_locations(puzzle_t1.split(sep='\n'))
+# wh.load_warehouse("./warehouses/warehouse_05.txt")
 # test = tester(wh, True, False)
 # heur = test.h(test)
 # actions = test.actions(test.initial)
