@@ -38,18 +38,31 @@ def manhatten(p1, p2):
 
 
 
-puzzle_t1 ='#######\n#.$@ #\n#######'
+useSimple = False
+macroTest = True
+
 wh = Warehouse()
-wh.extract_locations(puzzle_t1.split(sep='\n'))
-# wh.load_warehouse("./warehouses/warehouse_05.txt")
-# test = tester(wh, True, False)
+
+if useSimple:
+    puzzle_t1 ='#######\n# .$ @#\n#######'
+    wh.extract_locations(puzzle_t1.split(sep='\n'))
+else:
+    wh.load_warehouse("./warehouses/warehouse_05.txt")
+
+if macroTest:
+    print(wh)
+    res = solve_sokoban_macro(wh)
+    print(res)
+# test = tester(wh,True,True)
+# test.state = test.initial
 # heur = test.h(test)
 # actions = test.actions(test.initial)
 # print(wh.targets)
-print(wh)
+# print(wh)
 # res = test.result(test.initial,"Right")
 # print(actions)
 # print(res)
 
-result = solve_sokoban_elem(wh)
-print(result)
+# result = solve_sokoban_elem(wh)
+
+# print(result)

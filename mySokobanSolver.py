@@ -280,10 +280,11 @@ class SokobanPuzzle(search.Problem):
 
     '''
 
-    def __init__(self, warehouse, allow_taboo_push=True, macro=False):
+    def __init__(self, warehouse, allow_taboo_push=True, macro=False, verbose=False):
         # Initialise SokobanPuzzle Problem
         self.macro = macro
         self.allow_taboo_push = allow_taboo_push
+        self.verbose = verbose
 
         #-- Load Problemspace (Warehouse) --#
         #save initial state
@@ -292,13 +293,17 @@ class SokobanPuzzle(search.Problem):
         self.goal = warehouse.copy()
         self.goal.boxes = self.goal.targets
 
+        self.original_boxes = warehouse.boxes
+        self.original_worker = warehouse.worker
+
 
     def resultElem(self, state, action):
-        print("    ->Checking action " + str(action))
         new_state = state.copy(boxes=self.original_boxes,worker=self.original_worker)
         # return state with the box and worker moved after action
         new_state = check_and_move(new_state, [action])
-        print("      -->Result: " + str(new_state))
+        if self.verbose:
+            print("    ->Checking action " + str(action))
+            print("      -->Result: " + str(new_state))
         return new_state
 
     def resultMacro(self, state, action):
@@ -311,7 +316,10 @@ class SokobanPuzzle(search.Problem):
         @return
             a warehouse object which boxes was moved
         '''
-        new_state = state.copy()
+        if self.verbose:
+            print("    ->Checking action " + str(action))
+            print("      *boxes in locations: " + str(state.boxes))
+        new_state = state.copy(boxes=state.boxes.copy())
 
         box_previous_location = action[0]
 
@@ -319,7 +327,7 @@ class SokobanPuzzle(search.Problem):
         new_state.worker = box_previous_location
         moveDirection = action[1]
         #Add box back in at action[1] from the previous location.
-        new_state.boxes.append(box_previous_location + MOVEMENTS[moveDirection])
+        new_state.boxes.append((box_previous_location[0] + MOVEMENTS[moveDirection][0],box_previous_location[1] + MOVEMENTS[moveDirection][1]))
 
         return new_state
 
@@ -346,7 +354,7 @@ class SokobanPuzzle(search.Problem):
         and action. The default method costs 1 for every step in the path."""
         return c + 1
 
-    def actions(self, state):
+    def actions(self, state_in):
         """
         Return the list of actions that can be executed in the given state.
 
@@ -354,31 +362,36 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
-
+        state = state_in.copy(boxes = state_in.boxes.copy())
         self.original_boxes = state.boxes.copy()
         self.original_worker = state.worker
         actions = []
-        print("For Warehouse:")
-        print(state)
+        if self.verbose:
+            print("For Warehouse:")
+            print(state)
         if self.macro:
-            for box in state.boxes:
-                if can_go_there(state, box):
-                    for movement in MOVEMENTS:
-                        # Apply movement to the box
-                        action = (box[0] + MOVEMENTS[movement][0], box[1] + MOVEMENTS[movement][1])
-                        # If taboo cells are not allowed
-                        if not self.allow_taboo_push:
-                            if action in taboo_cells_positions():
-                                continue
-                        # If the action results in a wall
-                        if action in state.walls:
+            for box in state.boxes.copy():
+                for movement in MOVEMENTS:
+                    # Apply movement to the box
+                    next_location = (box[0] + MOVEMENTS[movement][0], box[1] + MOVEMENTS[movement][1])
+                    worker_location = (box[0] - MOVEMENTS[movement][0], box[1] - MOVEMENTS[movement][1])
+
+                    # If the worker can get to the location to push the box
+                    if not can_go_there(state, worker_location):
+                        continue
+
+                    # If taboo cells are not allowed
+                    if not self.allow_taboo_push:
+                        if next_location in taboo_cells_positions(state):
                             continue
-                        # If the action results in another box
-                        if action in state.boxes:
-                            continue
-                        # If no constraints are violated add the box position and the movement to the list
-                        actions.append((box, movement))
-            return actions
+                    # If the next_location results in a wall
+                    if next_location in state.walls:
+                        continue
+                    # If the next_location results in another box
+                    if next_location in state.boxes:
+                        continue
+                    # If no constraints are violated add the box position and the movement to the list
+                    actions.append((box, movement))
         else:
             for movement in MOVEMENTS:
                 # Apply movement to the worker
@@ -399,8 +412,18 @@ class SokobanPuzzle(search.Problem):
                         continue
                 # If no constraints are violated add the action to the list
                 actions.append(movement)
-        print("  ->Actions: " + str(actions))
+        if self.verbose:
+            print("  ->Actions: " + str(actions))
         return actions
+
+
+    def return_rowColumn(self, solution):
+        # Flips x,y in a macro solution so that it becomes row column
+        newSolution = []
+        for action in solution:
+            newSolution.append(((action[0][1],action[0][0]),action[1]))
+        return newSolution
+
 
     def h(self, n):
             """
@@ -495,33 +518,34 @@ def check_and_move(warehouse, action_seq):
                the sequence of actions.  This must be the same string as the
                string returned by the method  Warehouse.__str__()
     '''
+    wh = warehouse.copy()
     for action in action_seq:
         # Apply given movement to the position of the worker
-        move = (warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
+        move = (wh.worker[0] + MOVEMENTS[action][0], wh.worker[1] + MOVEMENTS[action][1])
         # If the action results in a wall position the action is illegal
-        if move in warehouse.walls:
+        if move in wh.walls:
             return 'Failure'
         # If the action pushes a box
-        if move in warehouse.boxes:
+        if move in wh.boxes:
             # The new position of the box
             box_movement = (move[0] + MOVEMENTS[action][0], move[1] + MOVEMENTS[action][1])
             # If the box is pushed into a wall or another box the action is illegal
-            if box_movement in warehouse.walls or box_movement in warehouse.boxes:
+            if box_movement in wh.walls or box_movement in wh.boxes:
                 return 'Failure'
 
-        # Apply the actions to the warehouse
-        warehouse.worker = (warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
+        # Apply the actions to the wh
+        wh.worker = (wh.worker[0] + MOVEMENTS[action][0], wh.worker[1] + MOVEMENTS[action][1])
         # If worker pushes a box
-        if warehouse.worker in warehouse.boxes:
-            # for i in range(0, len(warehouse.boxes)):
+        if wh.worker in wh.boxes:
+            # for i in range(0, len(wh.boxes)):
             #     # Find the box and push it in the given direction
-            #     if warehouse.worker == warehouse.boxes[i]:
-            #         warehouse.boxes[i] = (
-            #         warehouse.worker[0] + MOVEMENTS[action][0], warehouse.worker[1] + MOVEMENTS[action][1])
-            warehouse.boxes.remove(warehouse.worker)
-            warehouse.boxes.append((warehouse.worker[0] + MOVEMENTS[action][0],\
-                                     warehouse.worker[1] + MOVEMENTS[action][1]))
-    return warehouse
+            #     if wh.worker == wh.boxes[i]:
+            #         wh.boxes[i] = (
+            #         wh.worker[0] + MOVEMENTS[action][0], wh.worker[1] + MOVEMENTS[action][1])
+            wh.boxes.remove(wh.worker)
+            wh.boxes.append((wh.worker[0] + MOVEMENTS[action][0],\
+                                     wh.worker[1] + MOVEMENTS[action][1]))
+    return wh
 
 
 def check_action_seq(warehouse, action_seq):
@@ -568,13 +592,19 @@ def solve_sokoban_elem(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
     '''
-    puzzle = SokobanPuzzle(warehouse)
-    puzzle.macro = False
+    usingMacro = True
+    if usingMacro:
+        macroActions = solve_sokoban_macro(warehouse)
 
-    result = search.astar_graph_search(puzzle)
+    else:
+        puzzle = SokobanPuzzle(warehouse)
+        puzzle.macro = False
+
+        result = search.astar_graph_search(puzzle)
 
     if result:
-        print(result)
+        print("Start State: \n" + str(warehouse))
+        print("Result State: \n" + str(result.state))
         return result.solution()
     else:
         return ['Impossible']
@@ -663,12 +693,16 @@ def solve_sokoban_macro(warehouse):
     puzzle = SokobanPuzzle(warehouse)
     puzzle.macro = True
 
-    result = search.uniform_cost_search(puzzle)
+    result = search.astar_graph_search(puzzle)
 
     if result:
-        return result.solution()
+        print("Start State: \n" + str(puzzle.initial))
+        print("Result State: \n" + str(result.state))
+        return puzzle.return_rowColumn(result.solution())
     else:
-        return 'Impossible'
+        print("Start State: \n" + str(warehouse))
+        print("Impossible")
+        return ['Impossible']
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
