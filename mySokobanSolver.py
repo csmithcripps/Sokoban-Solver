@@ -414,6 +414,7 @@ class SokobanPuzzle(search.Problem):
                 actions.append(movement)
         if self.verbose:
             print("  ->Actions: " + str(actions))
+            print(state)
         return actions
 
 
@@ -592,12 +593,12 @@ def solve_sokoban_elem(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
     '''
-    usingMacro = True
+    usingMacro = False
     if usingMacro:
         macroActions = solve_sokoban_macro(warehouse)
 
     else:
-        puzzle = SokobanPuzzle(warehouse)
+        puzzle = SokobanPuzzle(warehouse, verbose=True)
         puzzle.macro = False
 
         result = search.astar_graph_search(puzzle)
@@ -621,11 +622,11 @@ def can_go_there(warehouse, dst):
       True if the worker can walk to cell dst=(row,column) without pushing any box
       False otherwise
     '''
-
-    walls = warehouse.walls
+    wh = warehouse.copy()
+    walls = wh.walls
+    boxes = wh.boxes.copy()
     # because we can't move boxes they are basically walls
-    walls.extend(warehouse.boxes)
-    worker = warehouse.worker
+    worker = wh.worker
     explored = []
 
     fullyexplored=False
@@ -638,21 +639,14 @@ def can_go_there(warehouse, dst):
         x = coord[0]
         y = coord[1]
 
-        # explore tile on top
-        if (x, y - 1) not in walls and (x, y - 1) not in explored:
-            explored.append((x, y - 1))
+        for direction in MOVEMENTS:
+            pos = (x + MOVEMENTS[direction][0],y + MOVEMENTS[direction][1])
+            if (pos not in walls and\
+                pos not in boxes and\
+                    pos not in explored):
 
-        # explore tile on beneath
-        if (x, y + 1) not in walls and (x, y + 1) not in explored:
-            explored.append((x, y + 1))
+                explored.append(pos)
 
-        # explore tile on left
-        if (x - 1, y) not in walls and (x - 1, y) not in explored:
-            explored.append((x - 1, y))
-
-        # explore tile on right
-        if (x + 1, y) not in walls and (x + 1, y) not in explored:
-            explored.append((x + 1, y))
 
     # while its not the tile we're looking for or we've explored every single tile.
     while not fullyexplored:
@@ -690,7 +684,7 @@ def solve_sokoban_macro(warehouse):
         If the puzzle is already in a goal state, simply return []
     '''
 
-    puzzle = SokobanPuzzle(warehouse)
+    puzzle = SokobanPuzzle(warehouse, verbose=True)
     puzzle.macro = True
 
     result = search.astar_graph_search(puzzle)
