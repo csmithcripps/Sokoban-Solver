@@ -603,21 +603,46 @@ def solve_sokoban_elem(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
     '''
-    usingMacro = False
+    usingMacro = 1
     if usingMacro:
         #Find the macro actions required to solve the puzzle
+        print('Solving for Macro Action Sequence')
         result = solve_sokoban_macro(warehouse)
         macroActions = []
         for action in result:
             macroActions.append(((action[0][1],action[0][0]),action[1]))
 
+        print('Macro Actions Found \n' + str(macroActions))
         #For these macro actions solve for the workers (elementary) movements
-        elemAction = []
+        elemActions = []
 
         for action in macroActions:
-            pushFrom = (action[0][0] + MOVEMENTS[action[1]][0], action[0][1] + MOVEMENTS[action[1]][1])
+
+            pushFrom = (action[0][0] - MOVEMENTS[action[1]][0], action[0][1] - MOVEMENTS[action[1]][1])
+
             goal = warehouse.copy(worker=pushFrom)
-            elemSequence = SokobanPuzzle(warehouse, macro=False, alternateGoal=True ,goalState=goal)
+
+            elemPuzzle = SokobanPuzzle(warehouse, macro=False, alternateGoal=True ,goalState=goal)
+
+            if warehouse.worker == pushFrom:
+                #move worker in desired direction
+                warehouse = check_and_move(warehouse, [action[1]])
+            else:
+                #move worker to desired location
+                res = search.astar_graph_search(elemPuzzle)
+
+                #move worker in desired direction
+                warehouse = check_and_move(res.state, [action[1]])
+                #update list of required elemtary actions
+                elemActions.extend(res.solution())
+
+            #update list of required elemtary actions
+            elemActions.append(action[1])
+            print('\nCompleted the Macro Action' + str(action))
+
+        print('\n\nFinal Elementary Sequence:')
+        print(elemActions)
+        return elemActions
 
 
 
@@ -629,12 +654,12 @@ def solve_sokoban_elem(warehouse):
 
         result = search.astar_graph_search(puzzle)
 
-    if result:
-        print("Start State: \n" + str(warehouse))
-        print("Result State: \n" + str(result.state))
-        return result.solution()
-    else:
-        return ['Impossible']
+        if result:
+            print("Start State: \n" + str(warehouse))
+            print("Result State: \n" + str(result.state))
+            return result.solution()
+        else:
+            return ['Impossible']
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -716,7 +741,7 @@ def solve_sokoban_macro(warehouse, verbose=False):
     t0 = time.time()
     result = search.astar_graph_search(puzzle)
     t1 = time.time()
-    print ('A* Solver took {:.6f} seconds'.format(t1-t0))
+    print ('The Macro Solve took {:.6f} seconds'.format(t1-t0))
 
     if result:
         print("Start State: \n" + str(puzzle.initial))
