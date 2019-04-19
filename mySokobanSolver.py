@@ -30,8 +30,6 @@ MOVEMENTS = {"Up": (0, -1),
              "Right": (1, 0),
              "Left": (-1, 0)}
 
-
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -68,8 +66,6 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.
     '''
-    # FAITH DO IT
-
     # Placeholder to hold taboo coords
     taboo = []
 
@@ -83,7 +79,6 @@ def taboo_cells(warehouse):
     # then it is a taboo cell.
 
     # Work out if a wall is a corner
-
     def itsacorner(coord, warehouse):
         # its a corner if it is in walls and
         # there are walls to the top left, top right, bottom left,
@@ -115,9 +110,6 @@ def taboo_cells(warehouse):
     warehouseinlines = str(warehouse).split("\n")
     # Create a coordinate list of empty space cells
     emptyspace = list(sokoban.find_2D_iterator(warehouseinlines, " "))
-
-    # Need to write a function that can determine if cell is in maze or not
-    # Will be similar to canwegothere
 
     def inmaze(coord, warehouse):
         xoriginal = coord[0]
@@ -239,7 +231,7 @@ def taboo_cells(warehouse):
     taboo.extend(rule2taboos)
 
     # Finally, make the new string with the taboo tiles marked
-    # Shamelessly rip the in built string maker from warehouse
+    # By using the in built string maker from warehouse
     X, Y = zip(*warehouse.walls)
     x_size, y_size = 1 + max(X), 1 + max(Y)
 
@@ -339,7 +331,6 @@ class SokobanPuzzle(search.Problem):
         return new_state
 
     def result(self, state, action):
-        # Choose which result function to use
         if self.macro:
             return self.resultMacro(state,action)
         else:
@@ -435,7 +426,6 @@ class SokobanPuzzle(search.Problem):
             newSolution.append(((action[0][1],action[0][0]),action[1]))
         return newSolution
 
-
     def h(self, n):
             """
             Heuristic
@@ -450,7 +440,6 @@ class SokobanPuzzle(search.Problem):
 
                 #Update Heuristic
                 heur = heur + manhatten(closest_target, box)
-            # print("heuristic: " + str(heur))
             return heur
 
 
@@ -468,48 +457,16 @@ def manhatten(p1, p2):
     """
     return abs((p1[0] - p2[0])) + abs((p1[1] - p2[1]))
 
+
 def distanceTransform(warehouse):
     return warehouse
 
-# def check_and_move(warehouse, action_seq):
-#     '''
-#     Same purpose as check_action_seq function
-#     NB: It does not check if it pushes a box onto a taboo cell.
-
-#     @param warehouse: a Warehouse object
-#     @param action_seq: a list of actions
-
-#     @return
-#         a altered warehouse
-#     '''
-#     wh = warehouse.copy()
-#     for action in action_seq:
-#         actorX, actorY = wh.worker
-
-#         #Look two ahead
-#         forward1 = (actorX + MOVEMENTS[action][0], actorY + MOVEMENTS[action][1])
-#         forward2 = (actorX + 2*MOVEMENTS[action][0], actorY + 2*MOVEMENTS[action][1])
-
-#         #Check whether the worker push walls
-#         if forward1 in wh.walls:
-#             return 'Failure'
-
-#         if forward1 in wh.boxes:
-#             if forward2 in wh.boxes or forward2 in wh.walls:
-#                 #push two boxes or the box has already nearby the wall, faliure
-#                 return 'Failure'
-#             #Only push one box
-#             wh.boxes.remove(forward1)
-#             wh.boxes.append(forward2)
-
-#         wh.worker = forward1
-
-#     return wh
 
 def check_and_move(warehouse, action_seq):
     '''
 
-    Determine if the sequence of actions listed in 'action_seq' is legal or not.
+    Determine if the sequence of actions listed in 'action_seq' is legal or not,
+    and performs the sequence on the warehouse.
 
     Important notes:
       - a legal sequence of actions does not necessarily solve the puzzle.
@@ -521,13 +478,8 @@ def check_and_move(warehouse, action_seq):
            For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
 
     @return
-        The string 'Failure', if one of the action was not successul.
-           For example, if the agent tries to push two boxes at the same time,
-                        or push one box into a wall.
-        Otherwise, if all actions were successful, return
-               A string representing the state of the puzzle after applying
-               the sequence of actions.  This must be the same string as the
-               string returned by the method  Warehouse.__str__()
+        The string 'Failure', if one of the action was not successul.    
+        Otherwise, the altered warehouse.
     '''
     wh = warehouse.copy(boxes=warehouse.boxes.copy())
     for action in action_seq:
@@ -548,12 +500,9 @@ def check_and_move(warehouse, action_seq):
         wh.worker = (wh.worker[0] + MOVEMENTS[action][0], wh.worker[1] + MOVEMENTS[action][1])
         # If worker pushes a box
         if wh.worker in wh.boxes:
-            # for i in range(0, len(wh.boxes)):
-            #     # Find the box and push it in the given direction
-            #     if wh.worker == wh.boxes[i]:
-            #         wh.boxes[i] = (
-            #         wh.worker[0] + MOVEMENTS[action][0], wh.worker[1] + MOVEMENTS[action][1])
+            # Find the box
             wh.boxes.remove(wh.worker)
+            # Append its new position
             wh.boxes.append((wh.worker[0] + MOVEMENTS[action][0],\
                                      wh.worker[1] + MOVEMENTS[action][1]))
     return wh
@@ -676,7 +625,7 @@ def can_go_there(warehouse, dst):
     wh = warehouse.copy()
     walls = wh.walls
     boxes = wh.boxes.copy()
-    # because we can't move boxes they are basically walls
+    # Because we can't move boxes, they are basically walls
     worker = wh.worker
     explored = []
 
@@ -685,7 +634,7 @@ def can_go_there(warehouse, dst):
     explored.append(worker)
 
     # Keep checking the 4 squares around tile in question, if you can go to them,
-    # add to explored. Keep going back to explored and doing the test on each one of them
+    # add to explored. Keep going back to explored and doing the test on each one of them.
     def explore(coord):
         x = coord[0]
         y = coord[1]
@@ -698,16 +647,15 @@ def can_go_there(warehouse, dst):
 
                 explored.append(pos)
 
-
-    # while its not the tile we're looking for or we've explored every single tile.
+    # While its not the tile we're looking for or we've explored every single tile.
     while not fullyexplored:
         lengthofexplored=len(explored)
         for i in explored:
             explore(i)
             if dst in explored:
                 return True
-            #if explored hasn't grown, it means there is no where else to explore
-            #meaning it's fully explored
+            # If explored hasn't grown, it means there is no where else to explore
+            # Meaning it's fully explored
             if lengthofexplored==len(explored):
                 fullyexplored=True
 
