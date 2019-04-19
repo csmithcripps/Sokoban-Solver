@@ -478,7 +478,7 @@ def check_and_move(warehouse, action_seq):
            For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
 
     @return
-        The string 'Failure', if one of the action was not successul.    
+        The string 'Failure', if one of the action was not successul.
         Otherwise, the altered warehouse.
     '''
     wh = warehouse.copy(boxes=warehouse.boxes.copy())
@@ -537,6 +537,64 @@ def check_action_seq(warehouse, action_seq):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def solve_sokoban_elem_via_macro(warehouse):
+     '''
+    This function should solve using elementary actions
+    the puzzle defined in a file.
+
+    @param warehouse: a valid Warehouse object (from sokoban.py)
+
+    @return
+        If puzzle cannot be solved return the string 'Impossible'
+        If a solution was found, return a list of elementary actions that solves
+            the given puzzle coded with 'Left', 'Right', 'Up', 'Down'
+            For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
+            If the puzzle is already in a goal state, simply return []
+    '''
+
+    #Find the macro actions required to solve the puzzle
+    print('Solving for Macro Action Sequence')
+    result = solve_sokoban_macro(warehouse)
+
+    if result == ['Impossible']:
+        return ['Impossible']
+
+    macroActions = []
+    for action in result:
+        macroActions.append(((action[0][1],action[0][0]),action[1]))
+
+    print('Macro Actions Found \n' + str(macroActions))
+    #For these macro actions solve for the workers (elementary) movements
+    elemActions = []
+
+    for action in macroActions:
+
+        pushFrom = (action[0][0] - MOVEMENTS[action[1]][0], action[0][1] - MOVEMENTS[action[1]][1])
+
+        goal = warehouse.copy(worker=pushFrom)
+
+        elemPuzzle = SokobanPuzzle(warehouse, macro=False, alternateGoal=True ,goalState=goal)
+
+        if warehouse.worker == pushFrom:
+            #move worker in desired direction
+            warehouse = check_and_move(warehouse, [action[1]])
+        else:
+            #move worker to desired location
+            res = search.astar_graph_search(elemPuzzle)
+
+            #move worker in desired direction
+            warehouse = check_and_move(res.state, [action[1]])
+            #update list of required elemtary actions
+            elemActions.extend(res.solution())
+
+        #update list of required elemtary actions
+        elemActions.append(action[1])
+        print('\nCompleted the Macro Action' + str(action))
+
+    print('\n\nFinal Elementary Sequence:')
+    print(elemActions)
+    return elemActions
+
 
 def solve_sokoban_elem(warehouse):
     '''
@@ -554,48 +612,7 @@ def solve_sokoban_elem(warehouse):
     '''
     usingMacro = 1
     if usingMacro:
-        #Find the macro actions required to solve the puzzle
-        print('Solving for Macro Action Sequence')
-        result = solve_sokoban_macro(warehouse)
-        macroActions = []
-        for action in result:
-            macroActions.append(((action[0][1],action[0][0]),action[1]))
-
-        print('Macro Actions Found \n' + str(macroActions))
-        #For these macro actions solve for the workers (elementary) movements
-        elemActions = []
-
-        for action in macroActions:
-
-            pushFrom = (action[0][0] - MOVEMENTS[action[1]][0], action[0][1] - MOVEMENTS[action[1]][1])
-
-            goal = warehouse.copy(worker=pushFrom)
-
-            elemPuzzle = SokobanPuzzle(warehouse, macro=False, alternateGoal=True ,goalState=goal)
-
-            if warehouse.worker == pushFrom:
-                #move worker in desired direction
-                warehouse = check_and_move(warehouse, [action[1]])
-            else:
-                #move worker to desired location
-                res = search.astar_graph_search(elemPuzzle)
-
-                #move worker in desired direction
-                warehouse = check_and_move(res.state, [action[1]])
-                #update list of required elemtary actions
-                elemActions.extend(res.solution())
-
-            #update list of required elemtary actions
-            elemActions.append(action[1])
-            print('\nCompleted the Macro Action' + str(action))
-
-        print('\n\nFinal Elementary Sequence:')
-        print(elemActions)
-        return elemActions
-
-
-
-
+        return solve_sokoban_elem_via_macro(warehouse)
 
     else:
         puzzle = SokobanPuzzle(warehouse, verbose=True)
