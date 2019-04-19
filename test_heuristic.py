@@ -38,8 +38,8 @@ def manhatten(p1, p2):
 
 
 
-useSimple = True
-macroTest = False
+useSimple = 1
+macroTest = 0
 
 wh = Warehouse()
 
@@ -50,9 +50,13 @@ else:
     wh.load_warehouse("./warehouses/warehouse_05.txt")
 
 if macroTest:
-    print(wh)
-    res = solve_sokoban_macro(wh)
+    res = solve_sokoban_macro(wh,verbose=False)
     print(res)
+else:
+    result = solve_sokoban_elem(wh)
+    print(result)
+
+
 # test = tester(wh,True,True)
 # test.state = test.initial
 # heur = test.h(test)
@@ -62,7 +66,3 @@ if macroTest:
 # res = test.result(test.initial,"Right")
 # print(actions)
 # print(res)
-
-result = solve_sokoban_elem(wh)
-
-print(result)
