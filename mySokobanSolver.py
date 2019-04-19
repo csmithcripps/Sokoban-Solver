@@ -20,7 +20,7 @@ SokobanPuzzle.macro = False
 # you have to use the 'search.py' file provided
 # as your code will be tested with this specific file
 import search
-
+import time
 import sokoban
 
 #  Global Variables - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -272,7 +272,10 @@ class SokobanPuzzle(search.Problem):
 
     '''
 
-    def __init__(self, warehouse, allow_taboo_push=True, macro=False, verbose=False):
+    def __init__(self, warehouse, allow_taboo_push=True,\
+         macro=False, verbose=False, alternateGoal=False,\
+              goalState=False):
+
         # Initialise SokobanPuzzle Problem
         self.macro = macro
         self.allow_taboo_push = allow_taboo_push
@@ -282,8 +285,12 @@ class SokobanPuzzle(search.Problem):
         #save initial state
         self.initial = warehouse.copy()
 
-        self.goal = warehouse.copy()
-        self.goal.boxes = self.goal.targets
+        self.alternateGoal = alternateGoal
+        if alternateGoal == False:
+            self.goal = warehouse.copy()
+            self.goal.boxes = self.goal.targets
+        else:
+            self.goal = goalState
 
         self.original_boxes = warehouse.boxes
         self.original_worker = warehouse.worker
@@ -335,6 +342,9 @@ class SokobanPuzzle(search.Problem):
             the set that is the boxes in the goal state
         Return True if the sets align (boxes at targets).
         """
+        if self.alternateGoal == True:
+            return state == self.goal
+
         return set(self.goal.boxes.copy()) == set(state.boxes.copy())
 
     def path_cost(self, c, state1, action, state2):
@@ -471,7 +481,7 @@ def check_and_move(warehouse, action_seq):
         The string 'Failure', if one of the action was not successul.    
         Otherwise, the altered warehouse.
     '''
-    wh = warehouse.copy()
+    wh = warehouse.copy(boxes=warehouse.boxes.copy())
     for action in action_seq:
         # Apply given movement to the position of the worker
         move = (wh.worker[0] + MOVEMENTS[action][0], wh.worker[1] + MOVEMENTS[action][1])
@@ -544,7 +554,23 @@ def solve_sokoban_elem(warehouse):
     '''
     usingMacro = False
     if usingMacro:
-        macroActions = solve_sokoban_macro(warehouse)
+        #Find the macro actions required to solve the puzzle
+        result = solve_sokoban_macro(warehouse)
+        macroActions = []
+        for action in result:
+            macroActions.append(((action[0][1],action[0][0]),action[1]))
+
+        #For these macro actions solve for the workers (elementary) movements
+        elemAction = []
+
+        for action in macroActions:
+            pushFrom = (action[0][0] + MOVEMENTS[action[1]][0], action[0][1] + MOVEMENTS[action[1]][1])
+            goal = warehouse.copy(worker=pushFrom)
+            elemSequence = SokobanPuzzle(warehouse, macro=False, alternateGoal=True ,goalState=goal)
+
+
+
+
 
     else:
         puzzle = SokobanPuzzle(warehouse, verbose=True)
@@ -613,7 +639,7 @@ def can_go_there(warehouse, dst):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def solve_sokoban_macro(warehouse):
+def solve_sokoban_macro(warehouse, verbose=False):
     '''
     Solve using macro actions the puzzle defined in the warehouse passed as
     a parameter. A sequence of macro actions should be
@@ -632,10 +658,13 @@ def solve_sokoban_macro(warehouse):
         If the puzzle is already in a goal state, simply return []
     '''
 
-    puzzle = SokobanPuzzle(warehouse, verbose=True)
+    puzzle = SokobanPuzzle(warehouse, verbose=verbose)
     puzzle.macro = True
 
+    t0 = time.time()
     result = search.astar_graph_search(puzzle)
+    t1 = time.time()
+    print ('A* Solver took {:.6f} seconds'.format(t1-t0))
 
     if result:
         print("Start State: \n" + str(puzzle.initial))
