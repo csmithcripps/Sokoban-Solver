@@ -744,11 +744,14 @@ def solve_sokoban_macro(warehouse, verbose=False):
         for action in solution:
             newSolution.append(((action[0][1],action[0][0]),action[1]))
         return newSolution
-    # puzzle.allow_taboo_push = False
-    puzzle = SokobanPuzzle(warehouse, verbose=verbose, usingDtransform=True)
-    puzzle.macro = True
+
 
     t0 = time.time()
+    puzzle = SokobanPuzzle(warehouse, verbose=verbose, allow_taboo_push=True,\
+        usingDtransform=True)
+    puzzle.macro = True
+
+
     result = search.astar_graph_search(puzzle)
     t1 = time.time()
     print ('The Macro Solve took {:.6f} seconds'.format(t1-t0))
