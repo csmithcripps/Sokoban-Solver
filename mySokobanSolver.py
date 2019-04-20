@@ -537,7 +537,7 @@ def check_action_seq(warehouse, action_seq):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def solve_sokoban_elem_via_macro(warehouse):
-     '''
+    '''
     This function should solve using elementary actions
     the puzzle defined in a file.
 
