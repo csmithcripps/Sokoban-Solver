@@ -538,7 +538,7 @@ def check_action_seq(warehouse, action_seq):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def solve_sokoban_elem_via_macro(warehouse):
-     '''
+    '''
     This function should solve using elementary actions
     the puzzle defined in a file.
 
@@ -551,29 +551,33 @@ def solve_sokoban_elem_via_macro(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
     '''
-
     #Find the macro actions required to solve the puzzle
     print('Solving for Macro Action Sequence')
     result = solve_sokoban_macro(warehouse)
 
+    #Check if Macro Solver deemed the puzzle impossible
     if result == ['Impossible']:
         return ['Impossible']
 
+    #Flip Row_Column coordinates to xy
     macroActions = []
     for action in result:
         macroActions.append(((action[0][1],action[0][0]),action[1]))
 
     print('Macro Actions Found \n' + str(macroActions))
+
     #For these macro actions solve for the workers (elementary) movements
     elemActions = []
 
     for action in macroActions:
-
-        pushFrom = (action[0][0] - MOVEMENTS[action[1]][0], action[0][1] - MOVEMENTS[action[1]][1])
+        #Push From position is the position the worker needs to be in
+        #  to push the box in the desired direction
+        pushFrom = (action[0][0] - MOVEMENTS[action[1]][0],\
+             action[0][1] - MOVEMENTS[action[1]][1])
 
         goal = warehouse.copy(worker=pushFrom)
-
-        elemPuzzle = SokobanPuzzle(warehouse, macro=False, alternateGoal=True ,goalState=goal)
+        elemPuzzle = SokobanPuzzle(warehouse, macro=False,\
+            alternateGoal=True ,goalState=goal)
 
         if warehouse.worker == pushFrom:
             #move worker in desired direction
@@ -584,12 +588,13 @@ def solve_sokoban_elem_via_macro(warehouse):
 
             #move worker in desired direction
             warehouse = check_and_move(res.state, [action[1]])
-            #update list of required elemtary actions
+            #update list of required elementary actions
             elemActions.extend(res.solution())
 
-        #update list of required elemtary actions
+        #update list of required elementary actions
         elemActions.append(action[1])
         print('\nCompleted the Macro Action' + str(action))
+        print(warehouse)
 
     print('\n\nFinal Elementary Sequence:')
     print(elemActions)
