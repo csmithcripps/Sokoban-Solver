@@ -30,6 +30,9 @@ MOVEMENTS = {"Up": (0, -1),
              "Right": (1, 0),
              "Left": (-1, 0)}
 
+def new_position(elem, direction):
+    return elem[0] + MOVEMENTS[direction][0], elem[1] + MOVEMENTS[direction][1]
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -355,6 +358,19 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
+        def taboo_cells_positions(warehouse):
+            tc = taboo_cells(warehouse)
+            row = 0
+            column = 0
+            for character in tc:
+                if character == r'\n':
+                    row += 1
+                    column = 0
+                if character == 'X':
+                    if row > 0:
+                        row = -row
+                    yield (row, column)
+
         state = state_in.copy(boxes = state_in.boxes.copy())
         self.original_boxes = state.boxes.copy()
         self.original_worker = state.worker
@@ -410,13 +426,6 @@ class SokobanPuzzle(search.Problem):
             print(state)
         return actions
 
-
-    def return_rowColumn(self, solution):
-        # Flips x,y in a macro solution so that it becomes row column
-        newSolution = []
-        for action in solution:
-            newSolution.append(((action[0][1],action[0][0]),action[1]))
-        return newSolution
 
     def h(self, n):
             """
@@ -729,9 +738,15 @@ def solve_sokoban_macro(warehouse, verbose=False):
         If the puzzle is already in a goal state, simply return []
     '''
 
+    def return_rowColumn(solution):
+        # Flips x,y in a macro solution so that it becomes row column
+        newSolution = []
+        for action in solution:
+            newSolution.append(((action[0][1],action[0][0]),action[1]))
+        return newSolution
+    # puzzle.allow_taboo_push = False
     puzzle = SokobanPuzzle(warehouse, verbose=verbose, usingDtransform=True)
     puzzle.macro = True
-    # puzzle.allow_taboo_push = False
 
     t0 = time.time()
     result = search.astar_graph_search(puzzle)
@@ -741,7 +756,7 @@ def solve_sokoban_macro(warehouse, verbose=False):
     if result:
         print("Start State: \n" + str(puzzle.initial))
         print("Result State: \n" + str(result.state))
-        return puzzle.return_rowColumn(result.solution())
+        return return_rowColumn(result.solution())
     else:
         print("Start State: \n" + str(warehouse))
         print("Impossible")
@@ -749,22 +764,6 @@ def solve_sokoban_macro(warehouse, verbose=False):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-def new_position(elem, direction):
-    return elem[0] + MOVEMENTS[direction][0], elem[1] + MOVEMENTS[direction][1]
-
-def taboo_cells_positions(warehouse):
-    tc = taboo_cells(warehouse)
-    row = 0
-    column = 0
-    for character in tc:
-        if character == r'\n':
-            row += 1
-            column = 0
-        if character == 'X':
-            if row > 0:
-                row = -row
-            yield (row, column)
 
 
 from sokoban import Warehouse
