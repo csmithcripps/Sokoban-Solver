@@ -39,15 +39,15 @@ def manhatten(p1, p2):
 
 
 useSimple = 0
-macroTest = 0
+macroTest = 1
 
 wh = Warehouse()
 
 if useSimple:
-    puzzle_t1 ='#######\n# .$  #\n#    @#\n#######'
+    puzzle_t1 ='#######\n# .   #\n#  $ @#\n#######'
     wh.extract_locations(puzzle_t1.split(sep='\n'))
 else:
-    wh.load_warehouse("./warehouses/warehouse_09.txt")
+    wh.load_warehouse("./warehouses/warehouse_13.txt")
 
 if macroTest:
     res = solve_sokoban_macro(wh,verbose=False)
@@ -57,12 +57,14 @@ else:
     # print(result)
 
 
-# test = tester(wh,True,True)
+# test = SokobanPuzzle(wh,allow_taboo_push=False, macro=True, usingDtransform=True)
 # test.state = test.initial
 # heur = test.h(test)
+# print(wh)
+# print(test.dTransform)
+# print(heur)
 # actions = test.actions(test.initial)
 # print(wh.targets)
-# print(wh)
 # res = test.result(test.initial,"Right")
 # print(actions)
 # print(res)

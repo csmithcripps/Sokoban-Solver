@@ -261,7 +261,7 @@ class SokobanPuzzle(search.Problem):
 
     def __init__(self, warehouse, allow_taboo_push=True,\
          macro=False, verbose=False, alternateGoal=False,\
-              goal=None):
+              goal=None, usingDtransform=False):
 
         # Initialise SokobanPuzzle Problem
         self.macro = macro
@@ -279,6 +279,10 @@ class SokobanPuzzle(search.Problem):
         else:
             self.goal = warehouse.copy()
             self.goal.worker = goal
+
+        self.usingDtransform = usingDtransform
+        if usingDtransform:
+            self.dTransform = distanceTransform(warehouse.copy())
 
         self.original_boxes = warehouse.boxes
         self.original_worker = warehouse.worker
@@ -418,6 +422,12 @@ class SokobanPuzzle(search.Problem):
             """
             Heuristic
             """
+            if self.usingDtransform:
+                heur = 0
+                for box in n.state.boxes:
+                    heur = heur + self.dTransform[box]
+                return heur
+
             heur = 0
             for box in n.state.boxes:
                 #Find closest target
@@ -447,7 +457,32 @@ def manhatten(p1, p2):
 
 
 def distanceTransform(warehouse):
-    return warehouse
+    wh = warehouse.copy()
+    walls = wh.walls
+    frontier = []
+    dtransform = {}
+    frontier.extend(wh.targets)
+
+    for target in wh.targets:
+        dtransform[target] = 0
+
+    explored = set() # initial empty set of explored states
+    while frontier:
+        node = frontier.pop()
+        for direction in MOVEMENTS:
+            pos = (node[0] + MOVEMENTS[direction][0],\
+                node[1] + MOVEMENTS[direction][1])
+            if pos not in walls and\
+                pos not in frontier and\
+                    pos not in explored:
+                dtransform[pos] = dtransform[node] + 1
+                frontier.append(pos)
+
+        explored.add(node)
+
+
+    return dtransform
+
 
 
 def check_and_move(warehouse, action_seq):
@@ -694,7 +729,7 @@ def solve_sokoban_macro(warehouse, verbose=False):
         If the puzzle is already in a goal state, simply return []
     '''
 
-    puzzle = SokobanPuzzle(warehouse, verbose=verbose)
+    puzzle = SokobanPuzzle(warehouse, verbose=verbose, usingDtransform=True)
     puzzle.macro = True
     # puzzle.allow_taboo_push = False
 
