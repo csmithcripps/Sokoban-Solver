@@ -500,7 +500,7 @@ def check_and_move(warehouse, action_seq):
         wh.worker = (wh.worker[0] + MOVEMENTS[action][0], wh.worker[1] + MOVEMENTS[action][1])
         # If worker pushes a box
         if wh.worker in wh.boxes:
-            # Find the box
+            # Find the box position, which is the workers current position, and remove it
             wh.boxes.remove(wh.worker)
             # Append its new position
             wh.boxes.append((wh.worker[0] + MOVEMENTS[action][0],\
