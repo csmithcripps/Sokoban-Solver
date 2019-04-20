@@ -157,9 +157,9 @@ def taboo_cells(warehouse):
         x_original = x
         y_original = y
 
-        # Check each tile at a time to see if it is a target. 
+        # Check each tile at a time to see if it is a target.
         # If it is not and has a wall behind it mark potential taboo.
-        
+
         # Check x right direction
         x += 1  # So as to not check the same tile again
         potentialtaboos = []
@@ -365,7 +365,7 @@ class SokobanPuzzle(search.Problem):
                     worker_location = (box[0] - MOVEMENTS[movement][0], box[1] - MOVEMENTS[movement][1])
 
                     # If the worker can get to the location to push the box
-                    if not can_go_there(state, worker_location):
+                    if not can_go_there(state, worker_location, useXY=True):
                         continue
 
                     # If taboo cells are not allowed
@@ -621,7 +621,7 @@ def solve_sokoban_elem(warehouse):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def can_go_there(warehouse, dst):
+def can_go_there(warehouse, dst, useXY=False):
     '''
     Determine whether the worker can walk to the cell dst=(row,column)
     without pushing any box.
@@ -630,6 +630,8 @@ def can_go_there(warehouse, dst):
       True if the worker can walk to cell dst=(row,column) without pushing any box
       False otherwise
     '''
+    if not useXY:
+        dst = (dst[1],dst[0])
     wh = warehouse.copy()
     walls = wh.walls
     boxes = wh.boxes.copy()
