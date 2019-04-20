@@ -44,10 +44,10 @@ macroTest = 0
 wh = Warehouse()
 
 if useSimple:
-    puzzle_t1 ='#######\n# .$ @#\n#######'
+    puzzle_t1 ='#######\n# .$  #\n#    @#\n#######'
     wh.extract_locations(puzzle_t1.split(sep='\n'))
 else:
-    wh.load_warehouse("./warehouses/warehouse_11.txt")
+    wh.load_warehouse("./warehouses/warehouse_09.txt")
 
 if macroTest:
     res = solve_sokoban_macro(wh,verbose=False)

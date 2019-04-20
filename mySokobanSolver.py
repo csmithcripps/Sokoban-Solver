@@ -261,7 +261,7 @@ class SokobanPuzzle(search.Problem):
 
     def __init__(self, warehouse, allow_taboo_push=True,\
          macro=False, verbose=False, alternateGoal=False,\
-              goalState=False):
+              goal=None):
 
         # Initialise SokobanPuzzle Problem
         self.macro = macro
@@ -277,7 +277,8 @@ class SokobanPuzzle(search.Problem):
             self.goal = warehouse.copy()
             self.goal.boxes = self.goal.targets
         else:
-            self.goal = goalState
+            self.goal = warehouse.copy()
+            self.goal.worker = goal
 
         self.original_boxes = warehouse.boxes
         self.original_worker = warehouse.worker
@@ -562,8 +563,7 @@ def solve_sokoban_elem_via_macro(warehouse):
              action[0][1] - MOVEMENTS[action[1]][1])
 
         goal = warehouse.copy(worker=pushFrom)
-        elemPuzzle = SokobanPuzzle(warehouse, macro=False,\
-            alternateGoal=True ,goalState=goal)
+        elemPuzzle = SokobanPuzzle(warehouse, macro=False,alternateGoal=True ,goal=pushFrom)
 
         if warehouse.worker == pushFrom:
             #move worker in desired direction
@@ -630,12 +630,13 @@ def can_go_there(warehouse, dst, useXY=False):
       True if the worker can walk to cell dst=(row,column) without pushing any box
       False otherwise
     '''
+
+    # Check if using (Row, Column) input, convert to (x, y)
     if not useXY:
         dst = (dst[1],dst[0])
     wh = warehouse.copy()
     walls = wh.walls
     boxes = wh.boxes.copy()
-    # Because we can't move boxes, they are basically walls
     worker = wh.worker
     explored = []
 
@@ -695,6 +696,7 @@ def solve_sokoban_macro(warehouse, verbose=False):
 
     puzzle = SokobanPuzzle(warehouse, verbose=verbose)
     puzzle.macro = True
+    # puzzle.allow_taboo_push = False
 
     t0 = time.time()
     result = search.astar_graph_search(puzzle)
