@@ -150,7 +150,6 @@ def taboo_cells(warehouse):
             taboo.append(i)
 
     # Identify taboo cells via rule 2:
-
     rule2taboos = []
     for i in taboo:
         x = i[0]
@@ -160,10 +159,11 @@ def taboo_cells(warehouse):
 
         # Check each tile at a time to see if it is a target. 
         # If it is not and has a wall behind it mark potential taboo.
+        
         # Check x right direction
         x += 1  # So as to not check the same tile again
         potentialtaboos = []
-        while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (x, y) in emptyspace:
+        while (x, y) in emptyspace:
             # Check if there is a wall on top or beneath
             if (x, y - 1) in warehouse.walls or (x, y + 1) in warehouse.walls:
                 potentialtaboos.append((x, y))
@@ -177,8 +177,7 @@ def taboo_cells(warehouse):
         # Check x left direction
         x = x_original - 1
         potentialtaboos = []
-        while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (
-                x, y) in emptyspace:
+        while (x, y) in emptyspace:
             # Check if there is a wall on top or beneath
             if (x, y - 1) in warehouse.walls or (x, y + 1) in warehouse.walls:
                 potentialtaboos.append((x, y))
@@ -193,7 +192,7 @@ def taboo_cells(warehouse):
         x = x_original
         y = y_original + 1
         potentialtaboos = []
-        while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (x, y) in emptyspace:
+        while (x, y) in emptyspace:
             # Check if there is wall to the left or the right
             if (x - 1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
                 potentialtaboos.append((x, y))
@@ -206,8 +205,7 @@ def taboo_cells(warehouse):
         # Check y up direction
         y = y_original - 1
         potentialtaboos = []
-        while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (
-                x, y) in emptyspace:
+        while (x, y) in emptyspace:
             # Check if there is wall to the left or the right
             if (x - 1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
                 potentialtaboos.append((x, y))
