@@ -326,7 +326,7 @@ class SokobanPuzzle(search.Problem):
         new_state.worker = box_previous_location
         moveDirection = action[1]
         #Add box back in at action[1] from the previous location.
-        new_state.boxes.append((box_previous_location[0] + MOVEMENTS[moveDirection][0],box_previous_location[1] + MOVEMENTS[moveDirection][1]))
+        new_state.boxes.append(new_position(box_previous_location, moveDirection))
 
         return new_state
 
@@ -374,7 +374,7 @@ class SokobanPuzzle(search.Problem):
             for box in state.boxes.copy():
                 for movement in MOVEMENTS:
                     # Apply movement to the box
-                    next_location = (box[0] + MOVEMENTS[movement][0], box[1] + MOVEMENTS[movement][1])
+                    next_location = new_position(box, movement)
                     worker_location = (box[0] - MOVEMENTS[movement][0], box[1] - MOVEMENTS[movement][1])
 
                     # If the worker can get to the location to push the box
@@ -396,7 +396,7 @@ class SokobanPuzzle(search.Problem):
         else:
             for movement in MOVEMENTS:
                 # Apply movement to the worker
-                move = (state.worker[0] + MOVEMENTS[movement][0], state.worker[1] + MOVEMENTS[movement][1])
+                move = new_position(state.worker, movement)
                 # If taboo cells are not allowed
                 if not self.allow_taboo_push:
                     if move in taboo_cells_positions(state):
@@ -407,7 +407,7 @@ class SokobanPuzzle(search.Problem):
                 # If the action pushes a box
                 if move in state.boxes:
                     # The new position of the box
-                    box_movement = (move[0] + MOVEMENTS[movement][0], move[1] + MOVEMENTS[movement][1])
+                    box_movement = new_position(move, movement)
                     # If the box is pushed into a wall or another box
                     if box_movement in state.walls or box_movement in state.boxes:
                         continue
@@ -484,27 +484,26 @@ def check_and_move(warehouse, action_seq):
     wh = warehouse.copy(boxes=warehouse.boxes.copy())
     for action in action_seq:
         # Apply given movement to the position of the worker
-        move = (wh.worker[0] + MOVEMENTS[action][0], wh.worker[1] + MOVEMENTS[action][1])
+        move = new_position(wh.worker, action)
         # If the action results in a wall position the action is illegal
         if move in wh.walls:
             return 'Failure'
         # If the action pushes a box
         if move in wh.boxes:
             # The new position of the box
-            box_movement = (move[0] + MOVEMENTS[action][0], move[1] + MOVEMENTS[action][1])
+            box_movement = new_position(move, action)
             # If the box is pushed into a wall or another box the action is illegal
             if box_movement in wh.walls or box_movement in wh.boxes:
                 return 'Failure'
 
         # Apply the actions to the wh
-        wh.worker = (wh.worker[0] + MOVEMENTS[action][0], wh.worker[1] + MOVEMENTS[action][1])
+        wh.worker = new_position(wh.worker, action)
         # If worker pushes a box
         if wh.worker in wh.boxes:
             # Find the box position, which is the workers current position, and remove it
             wh.boxes.remove(wh.worker)
             # Append its new position
-            wh.boxes.append((wh.worker[0] + MOVEMENTS[action][0],\
-                                     wh.worker[1] + MOVEMENTS[action][1]))
+            wh.boxes.append(new_position(wh.worker, action))
     return wh
 
 
@@ -719,6 +718,9 @@ def solve_sokoban_macro(warehouse, verbose=False):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def new_position(elem, direction):
+    return elem[0] + MOVEMENTS[direction][0], elem[1] + MOVEMENTS[direction][1]
 
 def taboo_cells_positions(warehouse):
     tc = taboo_cells(warehouse)
