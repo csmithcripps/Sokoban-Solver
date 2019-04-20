@@ -75,17 +75,9 @@ def taboo_cells(warehouse):
     width = max(X) - min(X)+1
 
     # Identify taboo cells via rule 1:
-    # Rule 1: if a cell is a corner inside the warehouse and not a target,
-    # then it is a taboo cell.
 
     # Work out if a wall is a corner
-    def itsacorner(coord, warehouse):
-        # its a corner if it is in walls and
-        # there are walls to the top left, top right, bottom left,
-        # or bottom right of this cell
-
-        # x+1, y+1 bottom right
-        # Condition if its a corner
+    def corner(coord):
         x = coord[0]
         y = coord[1]
         # Hemmed by walls top and left
@@ -111,15 +103,15 @@ def taboo_cells(warehouse):
     # Create a coordinate list of empty space cells
     emptyspace = list(sokoban.find_2D_iterator(warehouseinlines, " "))
 
-    def inmaze(coord, warehouse):
-        xoriginal = coord[0]
-        yoriginal = coord[1]
+    def in_maze(coord, warehouse):
+        x_original = coord[0]
+        y_original = coord[1]
         right = False
         left = False
         top = False
         bottom = False
-        x = xoriginal+1
-        y = yoriginal
+        x = x_original+1
+        y = y_original
         # Check right
         while x < width:
             if (x, y) in warehouse.walls:
@@ -127,15 +119,15 @@ def taboo_cells(warehouse):
                 break
             x += 1
         # Check left
-        x = xoriginal-1
+        x = x_original-1
         while x > -1:
             if (x, y) in warehouse.walls:
                 left = True
                 break
             x -= 1
 
-        y = yoriginal+1
-        x = xoriginal
+        y = y_original+1
+        x = x_original
         # Check top
         while y < height:
             if (x, y) in warehouse.walls:
@@ -143,8 +135,8 @@ def taboo_cells(warehouse):
                 break
             y += 1
         # Check bottom
-        y = yoriginal-1
-        x = xoriginal
+        y = y_original-1
+        x = x_original
         while y > -1:
             if (x, y) in warehouse.walls:
                 bottom = True
@@ -154,76 +146,71 @@ def taboo_cells(warehouse):
         return left and right and top and bottom
 
     for i in emptyspace:
-        if itsacorner(i, warehouse) and i not in warehouse.targets and inmaze(i, warehouse):
+        if corner(i) and i not in warehouse.targets and in_maze(i, warehouse):
             taboo.append(i)
 
     # Identify taboo cells via rule 2:
-    # Rule 2: all the cells between two corners inside the warehouse along a
-    # wall are taboo if none of these cells is a target.
-
-    # Right now taboo only contains corners
     rule2taboos = []
     for i in taboo:
         x = i[0]
         y = i[1]
-        xoriginal = x
-        yoriginal = y
+        x_original = x
+        y_original = y
 
-        # New plan, check each tile at a time if it is a target. If it is not and has a wall behind it
-        # mark potential taboo, move to next tile.
+        # Check each tile at a time to see if it is a target. 
+        # If it is not and has a wall behind it mark potential taboo.
+        
         # Check x right direction
         x += 1  # So as to not check the same tile again
         potentialtaboos = []
-        while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (x, y) in emptyspace:
+        while (x, y) in emptyspace:
             # Check if there is a wall on top or beneath
             if (x, y - 1) in warehouse.walls or (x, y + 1) in warehouse.walls:
                 potentialtaboos.append((x, y))
 
-            if itsacorner((x, y), warehouse) and potentialtaboos != []:
+            if corner((x, y)) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
                 potentialtaboos = []
 
             x += 1
 
         # Check x left direction
-        x = xoriginal - 1
+        x = x_original - 1
         potentialtaboos = []
-        while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (
-                x, y) in emptyspace:
+        while (x, y) in emptyspace:
             # Check if there is a wall on top or beneath
             if (x, y - 1) in warehouse.walls or (x, y + 1) in warehouse.walls:
                 potentialtaboos.append((x, y))
 
-            if itsacorner((x, y), warehouse) and potentialtaboos != []:
+            if corner((x, y)) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
                 potentialtaboos = []
 
             x -= 1
 
         # Check y down direction
-        x = xoriginal
-        y = yoriginal + 1
+        x = x_original
+        y = y_original + 1
         potentialtaboos = []
-        while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (x, y) in emptyspace:
+        while (x, y) in emptyspace:
             # Check if there is wall to the left or the right
             if (x - 1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
                 potentialtaboos.append((x, y))
 
-            if itsacorner((x, y), warehouse) and potentialtaboos != []:
+            if corner((x, y)) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
                 potentialtaboos = []
             y += 1
 
         # Check y up direction
-        y = yoriginal - 1
+        y = y_original - 1
         potentialtaboos = []
-        while (x, y) not in warehouse.walls and (x, y) not in warehouse.targets and (
-                x, y) in emptyspace:
+        while (x, y) in emptyspace:
             # Check if there is wall to the left or the right
             if (x - 1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
                 potentialtaboos.append((x, y))
 
-            if itsacorner((x, y), warehouse) and potentialtaboos != []:
+            if corner((x, y)) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
                 potentialtaboos = []
             y -= 1
@@ -326,7 +313,7 @@ class SokobanPuzzle(search.Problem):
         new_state.worker = box_previous_location
         moveDirection = action[1]
         #Add box back in at action[1] from the previous location.
-        new_state.boxes.append((box_previous_location[0] + MOVEMENTS[moveDirection][0],box_previous_location[1] + MOVEMENTS[moveDirection][1]))
+        new_state.boxes.append(new_position(box_previous_location, moveDirection))
 
         return new_state
 
@@ -374,7 +361,7 @@ class SokobanPuzzle(search.Problem):
             for box in state.boxes.copy():
                 for movement in MOVEMENTS:
                     # Apply movement to the box
-                    next_location = (box[0] + MOVEMENTS[movement][0], box[1] + MOVEMENTS[movement][1])
+                    next_location = new_position(box, movement)
                     worker_location = (box[0] - MOVEMENTS[movement][0], box[1] - MOVEMENTS[movement][1])
 
                     # If the worker can get to the location to push the box
@@ -396,18 +383,18 @@ class SokobanPuzzle(search.Problem):
         else:
             for movement in MOVEMENTS:
                 # Apply movement to the worker
-                action = (state.worker[0] + MOVEMENTS[movement][0], state.worker[1] + MOVEMENTS[movement][1])
+                move = new_position(state.worker, movement)
                 # If taboo cells are not allowed
                 if not self.allow_taboo_push:
-                    if action in taboo_cells_positions(state):
+                    if move in taboo_cells_positions(state):
                         continue
                 # If the action results in a wall
-                if action in state.walls:
+                if move in state.walls:
                     continue
                 # If the action pushes a box
-                if action in state.boxes:
+                if move in state.boxes:
                     # The new position of the box
-                    box_movement = (action[0] + MOVEMENTS[movement][0], action[1] + MOVEMENTS[movement][1])
+                    box_movement = new_position(move, movement)
                     # If the box is pushed into a wall or another box
                     if box_movement in state.walls or box_movement in state.boxes:
                         continue
@@ -484,27 +471,26 @@ def check_and_move(warehouse, action_seq):
     wh = warehouse.copy(boxes=warehouse.boxes.copy())
     for action in action_seq:
         # Apply given movement to the position of the worker
-        move = (wh.worker[0] + MOVEMENTS[action][0], wh.worker[1] + MOVEMENTS[action][1])
+        move = new_position(wh.worker, action)
         # If the action results in a wall position the action is illegal
         if move in wh.walls:
             return 'Failure'
         # If the action pushes a box
         if move in wh.boxes:
             # The new position of the box
-            box_movement = (move[0] + MOVEMENTS[action][0], move[1] + MOVEMENTS[action][1])
+            box_movement = new_position(move, action)
             # If the box is pushed into a wall or another box the action is illegal
             if box_movement in wh.walls or box_movement in wh.boxes:
                 return 'Failure'
 
         # Apply the actions to the wh
-        wh.worker = (wh.worker[0] + MOVEMENTS[action][0], wh.worker[1] + MOVEMENTS[action][1])
+        wh.worker = new_position(wh.worker, action)
         # If worker pushes a box
         if wh.worker in wh.boxes:
-            # Find the box
+            # Find the box position, which is the workers current position, and remove it
             wh.boxes.remove(wh.worker)
             # Append its new position
-            wh.boxes.append((wh.worker[0] + MOVEMENTS[action][0],\
-                                     wh.worker[1] + MOVEMENTS[action][1]))
+            wh.boxes.append(new_position(wh.worker, action))
     return wh
 
 
@@ -724,6 +710,9 @@ def solve_sokoban_macro(warehouse, verbose=False):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def new_position(elem, direction):
+    return elem[0] + MOVEMENTS[direction][0], elem[1] + MOVEMENTS[direction][1]
 
 def taboo_cells_positions(warehouse):
     tc = taboo_cells(warehouse)
