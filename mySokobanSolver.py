@@ -407,12 +407,17 @@ class SokobanPuzzle(search.Problem):
             Heuristic
             """
             if not self.alternateGoal:
+
+                #Check which heuristic to use
                 if self.usingDtransform:
                     heur = 0
                     for box in n.state.boxes:
+                        #Lookup box in dTransform
                         if box in self.dTransform:
                             heur = heur + self.dTransform[box]
                         else:
+                            # If it isn't in the dTransform than give large value as it
+                            # is outside of the maze
                             heur = heur + 500
                     return heur
 
@@ -427,6 +432,8 @@ class SokobanPuzzle(search.Problem):
                     #Update Heuristic
                     heur = heur + manhatten(closest_target, box)
                 return heur
+
+            # Alternate Heuristic for moving worker
             return manhatten(n.state.worker, self.goal.worker)
 
 
@@ -455,25 +462,32 @@ def distanceTransform(warehouse):
         a dictionary with keys that are the ground locations in the puzzles,
         who's values are their distance from a goal.
     """
+    # Initialise variables
     wh = warehouse.copy()
     walls = wh.walls
+
     frontier = []
     dtransform = {}
     frontier.extend(wh.targets)
 
+    # Targets have 0 distance to targets
     for target in wh.targets:
         dtransform[target] = 0
 
     explored = set() # initial empty set of explored states
     while frontier:
         node = frontier.pop()
+        # Look in each direction from the current node
         for direction in MOVEMENTS:
             pos = to_position(node, direction)
+            # Check if we should give it a distance
             if pos not in walls and\
                 pos not in frontier and\
                     pos not in explored:
+                # The distance of a point is 1 more than it's parent
                 dtransform[pos] = dtransform[node] + 1
                 frontier.append(pos)
+            # Check if a point needs to be reparented
             if pos in dtransform:
                 tempH = dtransform[node] + 1
                 if tempH < dtransform[pos]:
@@ -638,14 +652,17 @@ def solve_sokoban_elem(warehouse,\
             If the puzzle is already in a goal state, simply return []
     '''
 
+    #If @param usingMacro, then pass to via_macro function
     if usingMacro:
         return solve_sokoban_elem_via_macro(warehouse,\
             usingDtransform=usingDtransform, verbose=verbose)
 
     else:
+        #Initialise Puzzle
         puzzle = SokobanPuzzle(warehouse, verbose=verbose)
         puzzle.macro = False
 
+        #Find Solution
         result = search.astar_graph_search(puzzle)
 
         if result:
@@ -762,7 +779,7 @@ from sokoban import Warehouse
 
 if __name__ == "__main__":
     wh=Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_03.txt")
+    wh.load_warehouse("./warehouses/warehouse_19.txt")
 
     tabooC = taboo_cells(wh)
     print(wh)
