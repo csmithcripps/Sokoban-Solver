@@ -30,8 +30,21 @@ MOVEMENTS = {"Up": (0, -1),
              "Right": (1, 0),
              "Left": (-1, 0)}
 
-def new_position(elem, direction):
+# Placeholder to hold taboo coords
+taboo = []
+
+def to_position(elem, direction):
     return elem[0] + MOVEMENTS[direction][0], elem[1] + MOVEMENTS[direction][1]
+
+def from_position(elem, direction):
+    return elem[0] - MOVEMENTS[direction][0], elem[1] - MOVEMENTS[direction][1]
+
+def flip_cords_in_macro_solution(solution):
+    # Flips x,y in a macro solution so that it becomes row column
+    newSolution = []
+    for action in solution:
+        newSolution.append(((action[0][1],action[0][0]),action[1]))
+    return newSolution
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -69,14 +82,6 @@ def taboo_cells(warehouse, returnAsList=False):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.
     '''
-    # Placeholder to hold taboo coords
-    taboo = []
-
-    # Work out warehouse limits
-    X, Y = zip(*warehouse.walls)
-    height = max(Y) - min(Y)+1
-    width = max(X) - min(X)+1
-
     # Identify taboo cells via rule 1:
 
     # Work out if a wall is a corner
@@ -106,50 +111,19 @@ def taboo_cells(warehouse, returnAsList=False):
     # Create a coordinate list of empty space cells
     emptyspace = list(sokoban.find_2D_iterator(warehouseinlines, " "))
 
-    def in_maze(coord, warehouse):
-        x_original = coord[0]
-        y_original = coord[1]
-        right = False
-        left = False
-        top = False
-        bottom = False
-        x = x_original+1
-        y = y_original
-        # Check right
-        while x < width:
-            if (x, y) in warehouse.walls:
-                right = True
-                break
-            x += 1
-        # Check left
-        x = x_original-1
-        while x > -1:
-            if (x, y) in warehouse.walls:
-                left = True
-                break
-            x -= 1
+    # Remove coordinates outside the maze from the empty space list
+    i = 0
+    while i < len(emptyspace):
+        coord = emptyspace[i]
+        if not can_go_there(warehouse, emptyspace[i], True, True):
+            emptyspace.remove(coord)
+            i -= 1
+        i += 1
 
-        y = y_original+1
-        x = x_original
-        # Check top
-        while y < height:
-            if (x, y) in warehouse.walls:
-                top = True
-                break
-            y += 1
-        # Check bottom
-        y = y_original-1
-        x = x_original
-        while y > -1:
-            if (x, y) in warehouse.walls:
-                bottom = True
-                break
-            y -= 1
 
-        return left and right and top and bottom
 
     for i in emptyspace:
-        if corner(i) and i not in warehouse.targets and in_maze(i, warehouse):
+        if corner(i) and i not in warehouse.targets:
             taboo.append(i)
 
     # Identify taboo cells via rule 2:
@@ -170,6 +144,8 @@ def taboo_cells(warehouse, returnAsList=False):
             # Check if there is a wall on top or beneath
             if (x, y - 1) in warehouse.walls or (x, y + 1) in warehouse.walls:
                 potentialtaboos.append((x, y))
+            else:
+                break
 
             if corner((x, y)) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
@@ -184,6 +160,8 @@ def taboo_cells(warehouse, returnAsList=False):
             # Check if there is a wall on top or beneath
             if (x, y - 1) in warehouse.walls or (x, y + 1) in warehouse.walls:
                 potentialtaboos.append((x, y))
+            else:
+                break
 
             if corner((x, y)) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
@@ -199,6 +177,8 @@ def taboo_cells(warehouse, returnAsList=False):
             # Check if there is wall to the left or the right
             if (x - 1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
                 potentialtaboos.append((x, y))
+            else:
+                break
 
             if corner((x, y)) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
@@ -212,6 +192,8 @@ def taboo_cells(warehouse, returnAsList=False):
             # Check if there is wall to the left or the right
             if (x - 1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
                 potentialtaboos.append((x, y))
+            else:
+                break
 
             if corner((x, y)) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
@@ -327,7 +309,7 @@ class SokobanPuzzle(search.Problem):
         new_state.worker = box_previous_location
         moveDirection = action[1]
         #Add box back in at action[1] from the previous location.
-        new_state.boxes.append(new_position(box_previous_location, moveDirection))
+        new_state.boxes.append(to_position(box_previous_location, moveDirection))
 
         return new_state
 
@@ -375,8 +357,8 @@ class SokobanPuzzle(search.Problem):
             for box in state.boxes.copy():
                 for movement in MOVEMENTS:
                     # Apply movement to the box
-                    next_location = new_position(box, movement)
-                    worker_location = (box[0] - MOVEMENTS[movement][0], box[1] - MOVEMENTS[movement][1])
+                    next_location = to_position(box, movement)
+                    worker_location = from_position(box, movement)
 
                     # If the worker can get to the location to push the box
                     if not can_go_there(state, worker_location, useXY=True):
@@ -397,17 +379,18 @@ class SokobanPuzzle(search.Problem):
         else:
             for movement in MOVEMENTS:
                 # Apply movement to the worker
-                move = new_position(state.worker, movement)
+                move = to_position(state.worker, movement)
+                # If taboo cells are not allowed
+                if not self.allow_taboo_push:
+                    if move in taboo:
+                        continue
                 # If the action results in a wall
                 if move in state.walls:
                     continue
                 # If the action pushes a box
                 if move in state.boxes:
                     # The new position of the box
-                    box_movement = new_position(move, movement)
-                    if not self.allow_taboo_push:
-                        if box_movement in self.taboo:
-                            continue
+                    box_movement = to_position(move, movement)
                     # If the box is pushed into a wall or another box
                     if box_movement in state.walls or box_movement in state.boxes:
                         continue
@@ -485,8 +468,7 @@ def distanceTransform(warehouse):
     while frontier:
         node = frontier.pop()
         for direction in MOVEMENTS:
-            pos = (node[0] + MOVEMENTS[direction][0],\
-                node[1] + MOVEMENTS[direction][1])
+            pos = to_position(node, direction)
             if pos not in walls and\
                 pos not in frontier and\
                     pos not in explored:
@@ -526,26 +508,26 @@ def check_and_move(warehouse, action_seq):
     wh = warehouse.copy(boxes=warehouse.boxes.copy())
     for action in action_seq:
         # Apply given movement to the position of the worker
-        move = new_position(wh.worker, action)
+        move = to_position(wh.worker, action)
         # If the action results in a wall position the action is illegal
         if move in wh.walls:
             return 'Failure'
         # If the action pushes a box
         if move in wh.boxes:
             # The new position of the box
-            box_movement = new_position(move, action)
+            box_movement = to_position(move, action)
             # If the box is pushed into a wall or another box the action is illegal
             if box_movement in wh.walls or box_movement in wh.boxes:
                 return 'Failure'
 
         # Apply the actions to the wh
-        wh.worker = new_position(wh.worker, action)
+        wh.worker = to_position(wh.worker, action)
         # If worker pushes a box
         if wh.worker in wh.boxes:
             # Find the box position, which is the workers current position, and remove it
             wh.boxes.remove(wh.worker)
             # Append its new position
-            wh.boxes.append(new_position(wh.worker, action))
+            wh.boxes.append(to_position(wh.worker, action))
     return wh
 
 
@@ -601,10 +583,7 @@ def solve_sokoban_elem_via_macro(warehouse, verbose=False):
     if result == ['Impossible']:
         return ['Impossible']
 
-    #Flip Row_Column coordinates to xy
-    macroActions = []
-    for action in result:
-        macroActions.append(((action[0][1],action[0][0]),action[1]))
+    macroActions = flip_cords_in_macro_solution(result)
 
 
     if verbose: print('Macro Actions Found \n' + str(macroActions))
@@ -615,10 +594,8 @@ def solve_sokoban_elem_via_macro(warehouse, verbose=False):
     for action in macroActions:
         #Push From position is the position the worker needs to be in
         #  to push the box in the desired direction
-        pushFrom = (action[0][0] - MOVEMENTS[action[1]][0],\
-             action[0][1] - MOVEMENTS[action[1]][1])
+        pushFrom = from_position(action[0], action[1])
 
-        goal = warehouse.copy(worker=pushFrom)
         elemPuzzle = SokobanPuzzle(warehouse, macro=False,alternateGoal=True ,goal=pushFrom)
 
         if warehouse.worker == pushFrom:
@@ -678,7 +655,7 @@ def solve_sokoban_elem(warehouse, usingMacro=True, verbose=False):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def can_go_there(warehouse, dst, useXY=False):
+def can_go_there(warehouse, dst, useXY=False, ignoreBoxes=False):
     '''
     Determine whether the worker can walk to the cell dst=(row,column)
     without pushing any box.
@@ -694,6 +671,9 @@ def can_go_there(warehouse, dst, useXY=False):
     wh = warehouse.copy()
     walls = wh.walls
     boxes = wh.boxes.copy()
+    # So we can use this function as an in maze checker as well
+    if ignoreBoxes:
+        boxes = []
     worker = wh.worker
     explored = []
 
@@ -750,14 +730,6 @@ def solve_sokoban_macro(warehouse, verbose=False):
         Otherwise return M a sequence of macro actions that solves the puzzle.
         If the puzzle is already in a goal state, simply return []
     '''
-
-    def return_rowColumn(solution):
-        # Flips x,y in a macro solution so that it becomes row column
-        newSolution = []
-        for action in solution:
-            newSolution.append(((action[0][1],action[0][0]),action[1]))
-        return newSolution
-
     if verbose: print('Starting Macro Solve')
     t0 = time.time()
     puzzle = SokobanPuzzle(warehouse, verbose=verbose, allow_taboo_push=False,\
@@ -773,7 +745,7 @@ def solve_sokoban_macro(warehouse, verbose=False):
         if verbose:
             print("Start State: \n" + str(puzzle.initial))
             print("Result State: \n" + str(result.state))
-        return return_rowColumn(result.solution())
+        return flip_cords_in_macro_solution(result.solution())
     else:
         print("Start State: \n" + str(warehouse))
         print("Impossible")
