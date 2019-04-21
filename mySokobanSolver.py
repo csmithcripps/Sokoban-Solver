@@ -360,19 +360,6 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
-        def taboo_cells_positions(warehouse):
-            tc = taboo_cells(warehouse)
-            row = 0
-            column = 0
-            for character in tc:
-                if character == r'\n':
-                    row += 1
-                    column = 0
-                if character == 'X':
-                    if row > 0:
-                        row = -row
-                    yield (row, column)
-
         state = state_in.copy(boxes = state_in.boxes.copy())
         self.original_boxes = state.boxes.copy()
         self.original_worker = state.worker
@@ -393,7 +380,7 @@ class SokobanPuzzle(search.Problem):
 
                     # If taboo cells are not allowed
                     if not self.allow_taboo_push:
-                        if next_location in taboo_cells_positions(state):
+                        if next_location in taboo:
                             continue
                     # If the next_location results in a wall
                     if next_location in state.walls:
@@ -409,7 +396,7 @@ class SokobanPuzzle(search.Problem):
                 move = new_position(state.worker, movement)
                 # If taboo cells are not allowed
                 if not self.allow_taboo_push:
-                    if move in taboo_cells_positions(state):
+                    if move in taboo:
                         continue
                 # If the action results in a wall
                 if move in state.walls:
