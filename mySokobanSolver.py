@@ -39,6 +39,13 @@ def to_position(elem, direction):
 def from_position(elem, direction):
     return elem[0] - MOVEMENTS[direction][0], elem[1] - MOVEMENTS[direction][1]
 
+def flip_cords_in_macro_solution(solution):
+    # Flips x,y in a macro solution so that it becomes row column
+    newSolution = []
+    for action in solution:
+        newSolution.append(((action[0][1],action[0][0]),action[1]))
+    return newSolution
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -561,10 +568,7 @@ def solve_sokoban_elem_via_macro(warehouse):
     if result == ['Impossible']:
         return ['Impossible']
 
-    #Flip Row_Column coordinates to xy
-    macroActions = []
-    for action in result:
-        macroActions.append(((action[0][1],action[0][0]),action[1]))
+    macroActions = flip_cords_in_macro_solution(result)
 
     print('Macro Actions Found \n' + str(macroActions))
 
@@ -710,14 +714,6 @@ def solve_sokoban_macro(warehouse, verbose=False):
         Otherwise return M a sequence of macro actions that solves the puzzle.
         If the puzzle is already in a goal state, simply return []
     '''
-
-    def return_rowColumn(solution):
-        # Flips x,y in a macro solution so that it becomes row column
-        newSolution = []
-        for action in solution:
-            newSolution.append(((action[0][1],action[0][0]),action[1]))
-        return newSolution
-
     print('Starting Macro Solve')
     t0 = time.time()
     puzzle = SokobanPuzzle(warehouse, verbose=verbose,\
@@ -732,7 +728,7 @@ def solve_sokoban_macro(warehouse, verbose=False):
     if result:
         print("Start State: \n" + str(puzzle.initial))
         print("Result State: \n" + str(result.state))
-        return return_rowColumn(result.solution())
+        return flip_cords_in_macro_solution(result.solution())
     else:
         print("Start State: \n" + str(warehouse))
         print("Impossible")
