@@ -144,6 +144,8 @@ def taboo_cells(warehouse):
             # Check if there is a wall on top or beneath
             if (x, y - 1) in warehouse.walls or (x, y + 1) in warehouse.walls:
                 potentialtaboos.append((x, y))
+            else:
+                break
 
             if corner((x, y)) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
@@ -158,6 +160,8 @@ def taboo_cells(warehouse):
             # Check if there is a wall on top or beneath
             if (x, y - 1) in warehouse.walls or (x, y + 1) in warehouse.walls:
                 potentialtaboos.append((x, y))
+            else:
+                break
 
             if corner((x, y)) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
@@ -173,6 +177,8 @@ def taboo_cells(warehouse):
             # Check if there is wall to the left or the right
             if (x - 1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
                 potentialtaboos.append((x, y))
+            else:
+                break
 
             if corner((x, y)) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
@@ -186,6 +192,8 @@ def taboo_cells(warehouse):
             # Check if there is wall to the left or the right
             if (x - 1, y) in warehouse.walls or (x + 1, y) in warehouse.walls:
                 potentialtaboos.append((x, y))
+            else:
+                break
 
             if corner((x, y)) and potentialtaboos != []:
                 rule2taboos.extend(potentialtaboos)
@@ -741,6 +749,6 @@ from sokoban import Warehouse
 
 if __name__ == "__main__":
     wh=Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_39.txt")
+    wh.load_warehouse("./warehouses/warehouse_19.txt")
     taboo = taboo_cells(wh)
     print(taboo)
