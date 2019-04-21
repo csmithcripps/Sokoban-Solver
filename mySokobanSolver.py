@@ -477,8 +477,7 @@ def distanceTransform(warehouse):
     while frontier:
         node = frontier.pop()
         for direction in MOVEMENTS:
-            pos = (node[0] + MOVEMENTS[direction][0],\
-                node[1] + MOVEMENTS[direction][1])
+            pos = new_position(node, direction)
             if pos not in walls and\
                 pos not in frontier and\
                     pos not in explored:
