@@ -30,6 +30,9 @@ MOVEMENTS = {"Up": (0, -1),
              "Right": (1, 0),
              "Left": (-1, 0)}
 
+# Placeholder to hold taboo coords
+taboo = []
+
 def new_position(elem, direction):
     return elem[0] + MOVEMENTS[direction][0], elem[1] + MOVEMENTS[direction][1]
 
@@ -69,8 +72,7 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.
     '''
-    # Placeholder to hold taboo coords
-    taboo = []
+
 
     # Work out warehouse limits
     X, Y = zip(*warehouse.walls)
@@ -106,50 +108,19 @@ def taboo_cells(warehouse):
     # Create a coordinate list of empty space cells
     emptyspace = list(sokoban.find_2D_iterator(warehouseinlines, " "))
 
-    def in_maze(coord, warehouse):
-        x_original = coord[0]
-        y_original = coord[1]
-        right = False
-        left = False
-        top = False
-        bottom = False
-        x = x_original+1
-        y = y_original
-        # Check right
-        while x < width:
-            if (x, y) in warehouse.walls:
-                right = True
-                break
-            x += 1
-        # Check left
-        x = x_original-1
-        while x > -1:
-            if (x, y) in warehouse.walls:
-                left = True
-                break
-            x -= 1
+    # Remove coordinates outside the maze from the empty space list
+    i = 0
+    while i < len(emptyspace):
+        coord = emptyspace[i]
+        if not can_go_there(warehouse, emptyspace[i], True, True):
+            emptyspace.remove(coord)
+            i -= 1
+        i += 1
 
-        y = y_original+1
-        x = x_original
-        # Check top
-        while y < height:
-            if (x, y) in warehouse.walls:
-                top = True
-                break
-            y += 1
-        # Check bottom
-        y = y_original-1
-        x = x_original
-        while y > -1:
-            if (x, y) in warehouse.walls:
-                bottom = True
-                break
-            y -= 1
 
-        return left and right and top and bottom
 
     for i in emptyspace:
-        if corner(i) and i not in warehouse.targets and in_maze(i, warehouse):
+        if corner(i) and i not in warehouse.targets:
             taboo.append(i)
 
     # Identify taboo cells via rule 2:
@@ -669,7 +640,7 @@ def solve_sokoban_elem(warehouse, usingMacro=True):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def can_go_there(warehouse, dst, useXY=False):
+def can_go_there(warehouse, dst, useXY=False, ignoreBoxes=False):
     '''
     Determine whether the worker can walk to the cell dst=(row,column)
     without pushing any box.
@@ -685,6 +656,9 @@ def can_go_there(warehouse, dst, useXY=False):
     wh = warehouse.copy()
     walls = wh.walls
     boxes = wh.boxes.copy()
+    # So we can use this function as an in maze checker as well
+    if ignoreBoxes:
+        boxes = []
     worker = wh.worker
     explored = []
 
@@ -777,5 +751,6 @@ from sokoban import Warehouse
 
 if __name__ == "__main__":
     wh=Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_19.txt")
+    wh.load_warehouse("./warehouses/warehouse_39.txt")
     taboo = taboo_cells(wh)
+    print(taboo)
