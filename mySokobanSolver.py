@@ -283,6 +283,7 @@ class SokobanPuzzle(search.Problem):
         new_state = state.copy(boxes=self.original_boxes,worker=self.original_worker)
         # return state with the box and worker moved after action
         new_state = check_and_move(new_state, [action])
+
         if self.verbose:
             print("    ->Checking action " + str(action))
             print("      -->Result: " + str(new_state))
@@ -301,19 +302,23 @@ class SokobanPuzzle(search.Problem):
         if self.verbose:
             print("    ->Checking action " + str(action))
             print("      *boxes in locations: " + str(state.boxes))
+
         new_state = state.copy(boxes=state.boxes.copy())
 
         box_previous_location = action[0]
 
+        #Remove box from previous location and move the worker there
         new_state.boxes.remove(box_previous_location)
         new_state.worker = box_previous_location
+
+        #Move box into new position
         moveDirection = action[1]
-        #Add box back in at action[1] from the previous location.
         new_state.boxes.append(to_position(box_previous_location, moveDirection))
 
         return new_state
 
     def result(self, state, action):
+        # Check which result function to use
         if self.macro:
             return self.resultMacro(state,action)
         else:
