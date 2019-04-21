@@ -380,10 +380,6 @@ class SokobanPuzzle(search.Problem):
             for movement in MOVEMENTS:
                 # Apply movement to the worker
                 move = to_position(state.worker, movement)
-                # If taboo cells are not allowed
-                if not self.allow_taboo_push:
-                    if move in taboo:
-                        continue
                 # If the action results in a wall
                 if move in state.walls:
                     continue
@@ -391,6 +387,10 @@ class SokobanPuzzle(search.Problem):
                 if move in state.boxes:
                     # The new position of the box
                     box_movement = to_position(move, movement)
+
+                    if not self.allow_taboo_push:
+                        if box_movement in taboo:
+                            continue
                     # If the box is pushed into a wall or another box
                     if box_movement in state.walls or box_movement in state.boxes:
                         continue
@@ -747,8 +747,8 @@ def solve_sokoban_macro(warehouse, verbose=False):
             print("Result State: \n" + str(result.state))
         return flip_cords_in_macro_solution(result.solution())
     else:
-        print("Start State: \n" + str(warehouse))
-        print("Impossible")
+        if verbose: print("Start State: \n" + str(warehouse))
+        print("    !!Impossible")
         return ['Impossible']
 
 
@@ -759,8 +759,11 @@ from sokoban import Warehouse
 
 if __name__ == "__main__":
     wh=Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_19.txt")
-    taboo = taboo_cells(wh)
+    wh.load_warehouse("./warehouses/warehouse_03.txt")
+    tabooC = taboo_cells(wh)
     print(wh)
     print("Taboo Cells:")
-    print(taboo)
+    print(tabooC)
+
+    result = solve_sokoban_elem(wh, usingMacro=True, verbose=False)
+    print(result)
