@@ -580,7 +580,6 @@ def solve_sokoban_elem_via_macro(warehouse):
         #  to push the box in the desired direction
         pushFrom = from_position(action[0], action[1])
 
-        goal = warehouse.copy(worker=pushFrom)
         elemPuzzle = SokobanPuzzle(warehouse, macro=False,alternateGoal=True ,goal=pushFrom)
 
         if warehouse.worker == pushFrom:
