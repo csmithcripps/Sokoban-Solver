@@ -48,7 +48,7 @@ def my_team():
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-def taboo_cells(warehouse):
+def taboo_cells(warehouse, returnAsList=False):
     '''
     Identify the taboo cells of a warehouse. A cell inside a warehouse is
     called 'taboo' if whenever a box get pushed on such a cell then the puzzle
@@ -219,6 +219,8 @@ def taboo_cells(warehouse):
             y -= 1
 
     taboo.extend(rule2taboos)
+    if returnAsList:
+        return taboo
 
     # Finally, make the new string with the taboo tiles marked
     # By using the in built string maker from warehouse
@@ -230,6 +232,7 @@ def taboo_cells(warehouse):
         vis[y][x] = "#"
     for (x, y) in taboo:
         vis[y][x] = "X"
+
 
     return "\n".join(["".join(line) for line in vis])
 
@@ -289,6 +292,9 @@ class SokobanPuzzle(search.Problem):
 
         self.original_boxes = warehouse.boxes
         self.original_worker = warehouse.worker
+
+        if not allow_taboo_push:
+            self.taboo = taboo_cells(warehouse,returnAsList=True)
 
 
     def resultElem(self, state, action):
@@ -378,7 +384,7 @@ class SokobanPuzzle(search.Problem):
 
                     # If taboo cells are not allowed
                     if not self.allow_taboo_push:
-                        if next_location in taboo:
+                        if next_location in self.taboo:
                             continue
                     # If the next_location results in a wall
                     if next_location in state.walls:
@@ -392,10 +398,6 @@ class SokobanPuzzle(search.Problem):
             for movement in MOVEMENTS:
                 # Apply movement to the worker
                 move = new_position(state.worker, movement)
-                # If taboo cells are not allowed
-                if not self.allow_taboo_push:
-                    if move in taboo:
-                        continue
                 # If the action results in a wall
                 if move in state.walls:
                     continue
@@ -403,6 +405,9 @@ class SokobanPuzzle(search.Problem):
                 if move in state.boxes:
                     # The new position of the box
                     box_movement = new_position(move, movement)
+                    if not self.allow_taboo_push:
+                        if box_movement in self.taboo:
+                            continue
                     # If the box is pushed into a wall or another box
                     if box_movement in state.walls or box_movement in state.boxes:
                         continue
@@ -573,7 +578,7 @@ def check_action_seq(warehouse, action_seq):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def solve_sokoban_elem_via_macro(warehouse):
+def solve_sokoban_elem_via_macro(warehouse, verbose=False):
     '''
     This function should solve using elementary actions
     the puzzle defined in a file.
@@ -588,7 +593,8 @@ def solve_sokoban_elem_via_macro(warehouse):
             If the puzzle is already in a goal state, simply return []
     '''
     #Find the macro actions required to solve the puzzle
-    print('Solving for Macro Action Sequence')
+
+    if verbose: print('Solving for Macro Action Sequence')
     result = solve_sokoban_macro(warehouse)
 
     #Check if Macro Solver deemed the puzzle impossible
@@ -600,7 +606,8 @@ def solve_sokoban_elem_via_macro(warehouse):
     for action in result:
         macroActions.append(((action[0][1],action[0][0]),action[1]))
 
-    print('Macro Actions Found \n' + str(macroActions))
+
+    if verbose: print('Macro Actions Found \n' + str(macroActions))
 
     #For these macro actions solve for the workers (elementary) movements
     elemActions = []
@@ -628,15 +635,16 @@ def solve_sokoban_elem_via_macro(warehouse):
 
         #update list of required elementary actions
         elemActions.append(action[1])
-        print('\nCompleted the Macro Action' + str(action))
-        print(warehouse)
-
-    print('\n\nFinal Elementary Sequence:')
-    print(elemActions)
+        if verbose:
+            print('\nCompleted the Macro Action' + str(action))
+            print(warehouse)
+    if verbose:
+        print('\n\nFinal Elementary Sequence:')
+        print(elemActions)
     return elemActions
 
 
-def solve_sokoban_elem(warehouse, usingMacro=True):
+def solve_sokoban_elem(warehouse, usingMacro=True, verbose=False):
     '''
     This function should solve using elementary actions
     the puzzle defined in a file.
@@ -652,10 +660,10 @@ def solve_sokoban_elem(warehouse, usingMacro=True):
     '''
 
     if usingMacro:
-        return solve_sokoban_elem_via_macro(warehouse)
+        return solve_sokoban_elem_via_macro(warehouse, verbose=verbose)
 
     else:
-        puzzle = SokobanPuzzle(warehouse, verbose=True)
+        puzzle = SokobanPuzzle(warehouse, verbose=verbose)
         puzzle.macro = False
 
         result = search.astar_graph_search(puzzle)
@@ -750,20 +758,21 @@ def solve_sokoban_macro(warehouse, verbose=False):
             newSolution.append(((action[0][1],action[0][0]),action[1]))
         return newSolution
 
-    print('Starting Macro Solve')
+    if verbose: print('Starting Macro Solve')
     t0 = time.time()
-    puzzle = SokobanPuzzle(warehouse, verbose=verbose,\
+    puzzle = SokobanPuzzle(warehouse, verbose=verbose, allow_taboo_push=False,\
         usingDtransform=True)
     puzzle.macro = True
 
 
     result = search.astar_graph_search(puzzle)
     t1 = time.time()
-    print ('The Macro Solve took {:.6f} seconds'.format(t1-t0))
+    if verbose: print ('The Macro Solve took {:.6f} seconds'.format(t1-t0))
 
     if result:
-        print("Start State: \n" + str(puzzle.initial))
-        print("Result State: \n" + str(result.state))
+        if verbose:
+            print("Start State: \n" + str(puzzle.initial))
+            print("Result State: \n" + str(result.state))
         return return_rowColumn(result.solution())
     else:
         print("Start State: \n" + str(warehouse))
@@ -780,3 +789,6 @@ if __name__ == "__main__":
     wh=Warehouse()
     wh.load_warehouse("./warehouses/warehouse_19.txt")
     taboo = taboo_cells(wh)
+    print(wh)
+    print("Taboo Cells:")
+    print(taboo)
