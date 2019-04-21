@@ -33,8 +33,10 @@ MOVEMENTS = {"Up": (0, -1),
 # Placeholder to hold taboo coords
 taboo = []
 
+
 def new_position(elem, direction):
     return elem[0] + MOVEMENTS[direction][0], elem[1] + MOVEMENTS[direction][1]
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -73,11 +75,10 @@ def taboo_cells(warehouse):
        and the boxes.
     '''
 
-
     # Work out warehouse limits
     X, Y = zip(*warehouse.walls)
-    height = max(Y) - min(Y)+1
-    width = max(X) - min(X)+1
+    height = max(Y) - min(Y) + 1
+    width = max(X) - min(X) + 1
 
     # Identify taboo cells via rule 1:
 
@@ -108,50 +109,17 @@ def taboo_cells(warehouse):
     # Create a coordinate list of empty space cells
     emptyspace = list(sokoban.find_2D_iterator(warehouseinlines, " "))
 
-    def in_maze(coord, warehouse):
-        x_original = coord[0]
-        y_original = coord[1]
-        right = False
-        left = False
-        top = False
-        bottom = False
-        x = x_original+1
-        y = y_original
-        # Check right
-        while x < width:
-            if (x, y) in warehouse.walls:
-                right = True
-                break
-            x += 1
-        # Check left
-        x = x_original-1
-        while x > -1:
-            if (x, y) in warehouse.walls:
-                left = True
-                break
-            x -= 1
-
-        y = y_original+1
-        x = x_original
-        # Check top
-        while y < height:
-            if (x, y) in warehouse.walls:
-                top = True
-                break
-            y += 1
-        # Check bottom
-        y = y_original-1
-        x = x_original
-        while y > -1:
-            if (x, y) in warehouse.walls:
-                bottom = True
-                break
-            y -= 1
-
-        return left and right and top and bottom
+    # Remove coordinates outside the maze from the empty space list
+    i = 0
+    while i < len(emptyspace):
+        coord = emptyspace[i]
+        if not can_go_there(warehouse, emptyspace[i], True, True):
+            emptyspace.remove(coord)
+            i -= 1
+        i += 1
 
     for i in emptyspace:
-        if corner(i) and i not in warehouse.targets and in_maze(i, warehouse):
+        if corner(i) and i not in warehouse.targets:
             taboo.append(i)
 
     # Identify taboo cells via rule 2:
@@ -264,17 +232,17 @@ class SokobanPuzzle(search.Problem):
 
     '''
 
-    def __init__(self, warehouse, allow_taboo_push=True,\
-         macro=False, verbose=False, alternateGoal=False,\
-              goal=None, usingDtransform=False):
+    def __init__(self, warehouse, allow_taboo_push=True, \
+                 macro=False, verbose=False, alternateGoal=False, \
+                 goal=None, usingDtransform=False):
 
         # Initialise SokobanPuzzle Problem
         self.macro = macro
         self.allow_taboo_push = allow_taboo_push
         self.verbose = verbose
 
-        #-- Load Problemspace (Warehouse) --#
-        #save initial state
+        # -- Load Problemspace (Warehouse) --#
+        # save initial state
         self.initial = warehouse.copy()
 
         self.alternateGoal = alternateGoal
@@ -292,9 +260,8 @@ class SokobanPuzzle(search.Problem):
         self.original_boxes = warehouse.boxes
         self.original_worker = warehouse.worker
 
-
     def resultElem(self, state, action):
-        new_state = state.copy(boxes=self.original_boxes,worker=self.original_worker)
+        new_state = state.copy(boxes=self.original_boxes, worker=self.original_worker)
         # return state with the box and worker moved after action
         new_state = check_and_move(new_state, [action])
         if self.verbose:
@@ -322,16 +289,16 @@ class SokobanPuzzle(search.Problem):
         new_state.boxes.remove(box_previous_location)
         new_state.worker = box_previous_location
         moveDirection = action[1]
-        #Add box back in at action[1] from the previous location.
+        # Add box back in at action[1] from the previous location.
         new_state.boxes.append(new_position(box_previous_location, moveDirection))
 
         return new_state
 
     def result(self, state, action):
         if self.macro:
-            return self.resultMacro(state,action)
+            return self.resultMacro(state, action)
         else:
-            return self.resultElem(state,action)
+            return self.resultElem(state, action)
 
     def goal_test(self, state):
         """
@@ -360,6 +327,7 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
+
         def taboo_cells_positions(warehouse):
             tc = taboo_cells(warehouse)
             row = 0
@@ -373,7 +341,7 @@ class SokobanPuzzle(search.Problem):
                         row = -row
                     yield (row, column)
 
-        state = state_in.copy(boxes = state_in.boxes.copy())
+        state = state_in.copy(boxes=state_in.boxes.copy())
         self.original_boxes = state.boxes.copy()
         self.original_worker = state.worker
         actions = []
@@ -428,28 +396,27 @@ class SokobanPuzzle(search.Problem):
             print(state)
         return actions
 
-
     def h(self, n):
-            """
+        """
             Heuristic
             """
-            if self.usingDtransform:
-                heur = 0
-                for box in n.state.boxes:
-                    heur = heur + self.dTransform[box]
-                return heur
-
+        if self.usingDtransform:
             heur = 0
             for box in n.state.boxes:
-                #Find closest target
-                closest_target = n.state.targets[0]
-                for target in n.state.targets:
-                    if (manhatten(target, box) < manhatten(closest_target, box)):
-                        closest_target = target
-
-                #Update Heuristic
-                heur = heur + manhatten(closest_target, box)
+                heur = heur + self.dTransform[box]
             return heur
+
+        heur = 0
+        for box in n.state.boxes:
+            # Find closest target
+            closest_target = n.state.targets[0]
+            for target in n.state.targets:
+                if (manhatten(target, box) < manhatten(closest_target, box)):
+                    closest_target = target
+
+            # Update Heuristic
+            heur = heur + manhatten(closest_target, box)
+        return heur
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -477,23 +444,21 @@ def distanceTransform(warehouse):
     for target in wh.targets:
         dtransform[target] = 0
 
-    explored = set() # initial empty set of explored states
+    explored = set()  # initial empty set of explored states
     while frontier:
         node = frontier.pop()
         for direction in MOVEMENTS:
-            pos = (node[0] + MOVEMENTS[direction][0],\
-                node[1] + MOVEMENTS[direction][1])
-            if pos not in walls and\
-                pos not in frontier and\
+            pos = (node[0] + MOVEMENTS[direction][0], \
+                   node[1] + MOVEMENTS[direction][1])
+            if pos not in walls and \
+                    pos not in frontier and \
                     pos not in explored:
                 dtransform[pos] = dtransform[node] + 1
                 frontier.append(pos)
 
         explored.add(node)
 
-
     return dtransform
-
 
 
 def check_and_move(warehouse, action_seq):
@@ -584,46 +549,46 @@ def solve_sokoban_elem_via_macro(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
     '''
-    #Find the macro actions required to solve the puzzle
+    # Find the macro actions required to solve the puzzle
     print('Solving for Macro Action Sequence')
     result = solve_sokoban_macro(warehouse)
 
-    #Check if Macro Solver deemed the puzzle impossible
+    # Check if Macro Solver deemed the puzzle impossible
     if result == ['Impossible']:
         return ['Impossible']
 
-    #Flip Row_Column coordinates to xy
+    # Flip Row_Column coordinates to xy
     macroActions = []
     for action in result:
-        macroActions.append(((action[0][1],action[0][0]),action[1]))
+        macroActions.append(((action[0][1], action[0][0]), action[1]))
 
     print('Macro Actions Found \n' + str(macroActions))
 
-    #For these macro actions solve for the workers (elementary) movements
+    # For these macro actions solve for the workers (elementary) movements
     elemActions = []
 
     for action in macroActions:
-        #Push From position is the position the worker needs to be in
+        # Push From position is the position the worker needs to be in
         #  to push the box in the desired direction
-        pushFrom = (action[0][0] - MOVEMENTS[action[1]][0],\
-             action[0][1] - MOVEMENTS[action[1]][1])
+        pushFrom = (action[0][0] - MOVEMENTS[action[1]][0], \
+                    action[0][1] - MOVEMENTS[action[1]][1])
 
         goal = warehouse.copy(worker=pushFrom)
-        elemPuzzle = SokobanPuzzle(warehouse, macro=False,alternateGoal=True ,goal=pushFrom)
+        elemPuzzle = SokobanPuzzle(warehouse, macro=False, alternateGoal=True, goal=pushFrom)
 
         if warehouse.worker == pushFrom:
-            #move worker in desired direction
+            # move worker in desired direction
             warehouse = check_and_move(warehouse, [action[1]])
         else:
-            #move worker to desired location
+            # move worker to desired location
             res = search.astar_graph_search(elemPuzzle)
 
-            #move worker in desired direction
+            # move worker in desired direction
             warehouse = check_and_move(res.state, [action[1]])
-            #update list of required elementary actions
+            # update list of required elementary actions
             elemActions.extend(res.solution())
 
-        #update list of required elementary actions
+        # update list of required elementary actions
         elemActions.append(action[1])
         print('\nCompleted the Macro Action' + str(action))
         print(warehouse)
@@ -667,7 +632,7 @@ def solve_sokoban_elem(warehouse):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def can_go_there(warehouse, dst, useXY=False):
+def can_go_there(warehouse, dst, useXY=False, ignoreBoxes=False):
     '''
     Determine whether the worker can walk to the cell dst=(row,column)
     without pushing any box.
@@ -679,14 +644,17 @@ def can_go_there(warehouse, dst, useXY=False):
 
     # Check if using (Row, Column) input, convert to (x, y)
     if not useXY:
-        dst = (dst[1],dst[0])
+        dst = (dst[1], dst[0])
     wh = warehouse.copy()
     walls = wh.walls
     boxes = wh.boxes.copy()
+    # So we can use this function as an in maze checker as well
+    if ignoreBoxes:
+        boxes = []
     worker = wh.worker
     explored = []
 
-    fullyexplored=False
+    fullyexplored = False
 
     explored.append(worker)
 
@@ -697,24 +665,23 @@ def can_go_there(warehouse, dst, useXY=False):
         y = coord[1]
 
         for direction in MOVEMENTS:
-            pos = (x + MOVEMENTS[direction][0],y + MOVEMENTS[direction][1])
-            if (pos not in walls and\
-                pos not in boxes and\
+            pos = (x + MOVEMENTS[direction][0], y + MOVEMENTS[direction][1])
+            if (pos not in walls and \
+                    pos not in boxes and \
                     pos not in explored):
-
                 explored.append(pos)
 
     # While its not the tile we're looking for or we've explored every single tile.
     while not fullyexplored:
-        lengthofexplored=len(explored)
+        lengthofexplored = len(explored)
         for i in explored:
             explore(i)
             if dst in explored:
                 return True
             # If explored hasn't grown, it means there is no where else to explore
             # Meaning it's fully explored
-            if lengthofexplored==len(explored):
-                fullyexplored=True
+            if lengthofexplored == len(explored):
+                fullyexplored = True
 
     return False
 
@@ -744,19 +711,17 @@ def solve_sokoban_macro(warehouse, verbose=False):
         # Flips x,y in a macro solution so that it becomes row column
         newSolution = []
         for action in solution:
-            newSolution.append(((action[0][1],action[0][0]),action[1]))
+            newSolution.append(((action[0][1], action[0][0]), action[1]))
         return newSolution
 
-
     t0 = time.time()
-    puzzle = SokobanPuzzle(warehouse, verbose=verbose, allow_taboo_push=True,\
-        usingDtransform=True)
+    puzzle = SokobanPuzzle(warehouse, verbose=verbose, allow_taboo_push=True, \
+                           usingDtransform=True)
     puzzle.macro = True
-
 
     result = search.astar_graph_search(puzzle)
     t1 = time.time()
-    print ('The Macro Solve took {:.6f} seconds'.format(t1-t0))
+    print('The Macro Solve took {:.6f} seconds'.format(t1 - t0))
 
     if result:
         print("Start State: \n" + str(puzzle.initial))
@@ -774,6 +739,7 @@ def solve_sokoban_macro(warehouse, verbose=False):
 from sokoban import Warehouse
 
 if __name__ == "__main__":
-    wh=Warehouse()
+    wh = Warehouse()
     wh.load_warehouse("./warehouses/warehouse_19.txt")
     taboo = taboo_cells(wh)
+    print(taboo)
