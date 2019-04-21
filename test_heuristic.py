@@ -39,7 +39,7 @@ def manhatten(p1, p2):
 
 
 useSimple = 0
-macroTest = 1
+macroTest = 0
 
 wh = Warehouse()
 
@@ -47,13 +47,13 @@ if useSimple:
     puzzle_t1 ='#######\n# .   #\n#  $ @#\n#######'
     wh.extract_locations(puzzle_t1.split(sep='\n'))
 else:
-    wh.load_warehouse("./warehouses/warehouse_13.txt")
+    wh.load_warehouse("./warehouses/warehouse_01.txt")
 
 if macroTest:
     res = solve_sokoban_macro(wh,verbose=False)
     print(res)
 else:
-    result = solve_sokoban_elem(wh)
+    result = solve_sokoban_elem(wh, usingMacro=True)
     # print(result)
 
 
