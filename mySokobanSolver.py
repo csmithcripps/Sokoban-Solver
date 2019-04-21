@@ -431,23 +431,26 @@ class SokobanPuzzle(search.Problem):
             """
             Heuristic
             """
-            if self.usingDtransform:
+            if not self.alternateGoal:
+                if self.usingDtransform:
+                    heur = 0
+                    for box in n.state.boxes:
+                        heur = heur + self.dTransform[box]
+                    return heur
+
                 heur = 0
                 for box in n.state.boxes:
-                    heur = heur + self.dTransform[box]
+                    #Find closest target
+                    closest_target = n.state.targets[0]
+                    for target in n.state.targets:
+                        if (manhatten(target, box) < manhatten(closest_target, box)):
+                            closest_target = target
+
+                    #Update Heuristic
+                    heur = heur + manhatten(closest_target, box)
                 return heur
-
-            heur = 0
-            for box in n.state.boxes:
-                #Find closest target
-                closest_target = n.state.targets[0]
-                for target in n.state.targets:
-                    if (manhatten(target, box) < manhatten(closest_target, box)):
-                        closest_target = target
-
-                #Update Heuristic
-                heur = heur + manhatten(closest_target, box)
-            return heur
+            else:
+                heur = manhatten(n.state.worker, self.goal.worker)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -466,6 +469,15 @@ def manhatten(p1, p2):
 
 
 def distanceTransform(warehouse):
+    """
+    Computes a manhatten distance transform for a given warehouse
+
+    @param warehouse: a warehouse object
+
+    @return
+        a dictionary with keys that are the ground locations in the puzzles,
+        who's values are their distance from a goal.
+    """
     wh = warehouse.copy()
     walls = wh.walls
     frontier = []
@@ -486,6 +498,10 @@ def distanceTransform(warehouse):
                     pos not in explored:
                 dtransform[pos] = dtransform[node] + 1
                 frontier.append(pos)
+            if pos in dtransform:
+                tempH = dtransform[node] + 1
+                if tempH < dtransform[pos]:
+                    dtransform[pos] = tempH
 
         explored.add(node)
 
@@ -631,7 +647,7 @@ def solve_sokoban_elem_via_macro(warehouse):
     return elemActions
 
 
-def solve_sokoban_elem(warehouse):
+def solve_sokoban_elem(warehouse, usingMacro=True):
     '''
     This function should solve using elementary actions
     the puzzle defined in a file.
@@ -645,7 +661,7 @@ def solve_sokoban_elem(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
     '''
-    usingMacro = 1
+
     if usingMacro:
         return solve_sokoban_elem_via_macro(warehouse)
 
@@ -745,9 +761,9 @@ def solve_sokoban_macro(warehouse, verbose=False):
             newSolution.append(((action[0][1],action[0][0]),action[1]))
         return newSolution
 
-
+    print('Starting Macro Solve')
     t0 = time.time()
-    puzzle = SokobanPuzzle(warehouse, verbose=verbose, allow_taboo_push=True,\
+    puzzle = SokobanPuzzle(warehouse, verbose=verbose,\
         usingDtransform=True)
     puzzle.macro = True
 
