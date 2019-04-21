@@ -72,13 +72,6 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.
     '''
-
-
-    # Work out warehouse limits
-    X, Y = zip(*warehouse.walls)
-    height = max(Y) - min(Y)+1
-    width = max(X) - min(X)+1
-
     # Identify taboo cells via rule 1:
 
     # Work out if a wall is a corner
