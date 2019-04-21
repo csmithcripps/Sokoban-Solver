@@ -38,13 +38,13 @@ def manhatten(p1, p2):
 
 
 
-useSimple = 0
+useSimple = 1
 macroTest = 0
 
 wh = Warehouse()
 
 if useSimple:
-    puzzle_t1 ='#######\n# .   #\n#  $ @#\n#######'
+    puzzle_t1 ='#######\n# . $ #\n#    @#\n#######'
     wh.extract_locations(puzzle_t1.split(sep='\n'))
 else:
     wh.load_warehouse("./warehouses/warehouse_01.txt")

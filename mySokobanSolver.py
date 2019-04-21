@@ -422,7 +422,10 @@ class SokobanPuzzle(search.Problem):
                 if self.usingDtransform:
                     heur = 0
                     for box in n.state.boxes:
-                        heur = heur + self.dTransform[box]
+                        if box in self.dTransform:
+                            heur = heur + self.dTransform[box]
+                        else:
+                            heur = heur + 500
                     return heur
 
                 heur = 0
