@@ -560,7 +560,7 @@ def check_action_seq(warehouse, action_seq):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def solve_sokoban_elem_via_macro(warehouse, verbose=False):
+def solve_sokoban_elem_via_macro(warehouse, usingDtransform=True, verbose=False):
     '''
     This function should solve using elementary actions
     the puzzle defined in a file.
@@ -577,7 +577,8 @@ def solve_sokoban_elem_via_macro(warehouse, verbose=False):
     #Find the macro actions required to solve the puzzle
 
     if verbose: print('Solving for Macro Action Sequence')
-    result = solve_sokoban_macro(warehouse)
+    result = solve_sokoban_macro(warehouse, usingDtransform=usingDtransform,\
+        verbose=verbose)
 
     #Check if Macro Solver deemed the puzzle impossible
     if result == ['Impossible']:
@@ -621,7 +622,8 @@ def solve_sokoban_elem_via_macro(warehouse, verbose=False):
     return elemActions
 
 
-def solve_sokoban_elem(warehouse, usingMacro=True, verbose=False):
+def solve_sokoban_elem(warehouse,\
+    usingMacro=True, usingDtransform=True, verbose=False):
     '''
     This function should solve using elementary actions
     the puzzle defined in a file.
@@ -637,7 +639,8 @@ def solve_sokoban_elem(warehouse, usingMacro=True, verbose=False):
     '''
 
     if usingMacro:
-        return solve_sokoban_elem_via_macro(warehouse, verbose=verbose)
+        return solve_sokoban_elem_via_macro(warehouse,\
+            usingDtransform=usingDtransform, verbose=verbose)
 
     else:
         puzzle = SokobanPuzzle(warehouse, verbose=verbose)
@@ -712,7 +715,7 @@ def can_go_there(warehouse, dst, useXY=False, ignoreBoxes=False):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def solve_sokoban_macro(warehouse, verbose=False):
+def solve_sokoban_macro(warehouse, usingDtransform=True, verbose=False):
     '''
     Solve using macro actions the puzzle defined in the warehouse passed as
     a parameter. A sequence of macro actions should be
@@ -733,7 +736,7 @@ def solve_sokoban_macro(warehouse, verbose=False):
     if verbose: print('Starting Macro Solve')
     t0 = time.time()
     puzzle = SokobanPuzzle(warehouse, verbose=verbose, allow_taboo_push=False,\
-        usingDtransform=True)
+        usingDtransform=usingDtransform)
     puzzle.macro = True
 
 
@@ -760,6 +763,7 @@ from sokoban import Warehouse
 if __name__ == "__main__":
     wh=Warehouse()
     wh.load_warehouse("./warehouses/warehouse_03.txt")
+
     tabooC = taboo_cells(wh)
     print(wh)
     print("Taboo Cells:")
