@@ -283,6 +283,7 @@ class SokobanPuzzle(search.Problem):
         new_state = state.copy(boxes=self.original_boxes,worker=self.original_worker)
         # return state with the box and worker moved after action
         new_state = check_and_move(new_state, [action])
+
         if self.verbose:
             print("    ->Checking action " + str(action))
             print("      -->Result: " + str(new_state))
@@ -301,19 +302,23 @@ class SokobanPuzzle(search.Problem):
         if self.verbose:
             print("    ->Checking action " + str(action))
             print("      *boxes in locations: " + str(state.boxes))
+
         new_state = state.copy(boxes=state.boxes.copy())
 
         box_previous_location = action[0]
 
+        #Remove box from previous location and move the worker there
         new_state.boxes.remove(box_previous_location)
         new_state.worker = box_previous_location
+
+        #Move box into new position
         moveDirection = action[1]
-        #Add box back in at action[1] from the previous location.
         new_state.boxes.append(to_position(box_previous_location, moveDirection))
 
         return new_state
 
     def result(self, state, action):
+        # Check which result function to use
         if self.macro:
             return self.resultMacro(state,action)
         else:
@@ -407,12 +412,17 @@ class SokobanPuzzle(search.Problem):
             Heuristic
             """
             if not self.alternateGoal:
+
+                #Check which heuristic to use
                 if self.usingDtransform:
                     heur = 0
                     for box in n.state.boxes:
+                        #Lookup box in dTransform
                         if box in self.dTransform:
                             heur = heur + self.dTransform[box]
                         else:
+                            # If it isn't in the dTransform than give large value as it
+                            # is outside of the maze
                             heur = heur + 500
                     return heur
 
@@ -427,6 +437,8 @@ class SokobanPuzzle(search.Problem):
                     #Update Heuristic
                     heur = heur + manhatten(closest_target, box)
                 return heur
+
+            # Alternate Heuristic for moving worker
             return manhatten(n.state.worker, self.goal.worker)
 
 
@@ -455,25 +467,32 @@ def distanceTransform(warehouse):
         a dictionary with keys that are the ground locations in the puzzles,
         who's values are their distance from a goal.
     """
+    # Initialise variables
     wh = warehouse.copy()
     walls = wh.walls
+
     frontier = []
     dtransform = {}
     frontier.extend(wh.targets)
 
+    # Targets have 0 distance to targets
     for target in wh.targets:
         dtransform[target] = 0
 
     explored = set() # initial empty set of explored states
     while frontier:
         node = frontier.pop()
+        # Look in each direction from the current node
         for direction in MOVEMENTS:
             pos = to_position(node, direction)
+            # Check if we should give it a distance
             if pos not in walls and\
                 pos not in frontier and\
                     pos not in explored:
+                # The distance of a point is 1 more than it's parent
                 dtransform[pos] = dtransform[node] + 1
                 frontier.append(pos)
+            # Check if a point needs to be reparented
             if pos in dtransform:
                 tempH = dtransform[node] + 1
                 if tempH < dtransform[pos]:
@@ -560,7 +579,7 @@ def check_action_seq(warehouse, action_seq):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def solve_sokoban_elem_via_macro(warehouse, verbose=False):
+def solve_sokoban_elem_via_macro(warehouse, usingDtransform=True, verbose=False):
     '''
     This function should solve using elementary actions
     the puzzle defined in a file.
@@ -577,7 +596,8 @@ def solve_sokoban_elem_via_macro(warehouse, verbose=False):
     #Find the macro actions required to solve the puzzle
 
     if verbose: print('Solving for Macro Action Sequence')
-    result = solve_sokoban_macro(warehouse)
+    result = solve_sokoban_macro(warehouse, usingDtransform=usingDtransform,\
+        verbose=verbose)
 
     #Check if Macro Solver deemed the puzzle impossible
     if result == ['Impossible']:
@@ -621,7 +641,8 @@ def solve_sokoban_elem_via_macro(warehouse, verbose=False):
     return elemActions
 
 
-def solve_sokoban_elem(warehouse, usingMacro=True, verbose=False):
+def solve_sokoban_elem(warehouse,\
+    usingMacro=True, usingDtransform=True, verbose=False):
     '''
     This function should solve using elementary actions
     the puzzle defined in a file.
@@ -636,14 +657,17 @@ def solve_sokoban_elem(warehouse, usingMacro=True, verbose=False):
             If the puzzle is already in a goal state, simply return []
     '''
 
+    #If @param usingMacro, then pass to via_macro function
     if usingMacro:
-        return solve_sokoban_elem_via_macro(warehouse, verbose=verbose)
+        return solve_sokoban_elem_via_macro(warehouse,\
+            usingDtransform=usingDtransform, verbose=verbose)
 
     else:
-        t0 = time.time()
+        #Initialise Puzzle
         puzzle = SokobanPuzzle(warehouse, verbose=verbose)
         puzzle.macro = False
 
+        #Find Solution
         result = search.astar_graph_search(puzzle)
         t1 = time.time()
         print ('The Elementary Solve took {:.6f} seconds'.format(t1-t0))
@@ -715,7 +739,7 @@ def can_go_there(warehouse, dst, useXY=False, ignoreBoxes=False):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def solve_sokoban_macro(warehouse, verbose=False):
+def solve_sokoban_macro(warehouse, usingDtransform=True, verbose=False):
     '''
     Solve using macro actions the puzzle defined in the warehouse passed as
     a parameter. A sequence of macro actions should be
@@ -734,7 +758,8 @@ def solve_sokoban_macro(warehouse, verbose=False):
         If the puzzle is already in a goal state, simply return []
     '''
     t0 = time.time()
-    puzzle = SokobanPuzzle(warehouse, verbose=verbose)
+    puzzle = SokobanPuzzle(warehouse, verbose=verbose, allow_taboo_push=False,\
+        usingDtransform=usingDtransform)
     puzzle.macro = True
 
 
@@ -757,7 +782,8 @@ from sokoban import Warehouse
 
 if __name__ == "__main__":
     wh=Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_07.txt")
+    wh.load_warehouse("./warehouses/warehouse_19.txt")
+
     tabooC = taboo_cells(wh)
 
     print(solve_sokoban_elem(wh, usingMacro=True))
