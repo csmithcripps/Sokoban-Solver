@@ -261,7 +261,7 @@ class SokobanPuzzle(search.Problem):
         self.initial = warehouse.copy()
 
         self.alternateGoal = alternateGoal
-        if alternateGoal == False:
+        if not alternateGoal:
             self.goal = warehouse.copy()
             self.goal.boxes = self.goal.targets
         else:
@@ -640,10 +640,13 @@ def solve_sokoban_elem(warehouse, usingMacro=True, verbose=False):
         return solve_sokoban_elem_via_macro(warehouse, verbose=verbose)
 
     else:
+        t0 = time.time()
         puzzle = SokobanPuzzle(warehouse, verbose=verbose)
         puzzle.macro = False
 
         result = search.astar_graph_search(puzzle)
+        t1 = time.time()
+        print ('The Elementary Solve took {:.6f} seconds'.format(t1-t0))
 
         if result:
             print("Start State: \n" + str(warehouse))
@@ -730,25 +733,20 @@ def solve_sokoban_macro(warehouse, verbose=False):
         Otherwise return M a sequence of macro actions that solves the puzzle.
         If the puzzle is already in a goal state, simply return []
     '''
-    if verbose: print('Starting Macro Solve')
     t0 = time.time()
-    puzzle = SokobanPuzzle(warehouse, verbose=verbose, allow_taboo_push=False,\
-        usingDtransform=True)
+    puzzle = SokobanPuzzle(warehouse, verbose=verbose)
     puzzle.macro = True
 
 
     result = search.astar_graph_search(puzzle)
     t1 = time.time()
-    if verbose: print ('The Macro Solve took {:.6f} seconds'.format(t1-t0))
+    print ('The Macro Solve took {:.6f} seconds'.format(t1-t0))
 
     if result:
-        if verbose:
-            print("Start State: \n" + str(puzzle.initial))
-            print("Result State: \n" + str(result.state))
+        print("Start State: \n" + str(puzzle.initial))
+        print("Result State: \n" + str(result.state))
         return flip_cords_in_macro_solution(result.solution())
     else:
-        if verbose: print("Start State: \n" + str(warehouse))
-        print("    !!Impossible")
         return ['Impossible']
 
 
@@ -759,11 +757,7 @@ from sokoban import Warehouse
 
 if __name__ == "__main__":
     wh=Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_03.txt")
+    wh.load_warehouse("./warehouses/warehouse_07.txt")
     tabooC = taboo_cells(wh)
-    print(wh)
-    print("Taboo Cells:")
-    print(tabooC)
 
-    result = solve_sokoban_elem(wh, usingMacro=True, verbose=False)
-    print(result)
+    print(solve_sokoban_elem(wh, usingMacro=True))
