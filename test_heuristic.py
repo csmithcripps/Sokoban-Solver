@@ -39,7 +39,7 @@ def manhatten(p1, p2):
 
 
 useSimple = 0
-macroTest = 1
+macroTest = 0
 
 wh = Warehouse()
 
@@ -53,7 +53,7 @@ if macroTest:
     res = solve_sokoban_macro(wh,verbose=False)
     print(res)
 else:
-    result = solve_sokoban_elem(wh)
+    result = solve_sokoban_elem(wh, usingMacro=True)
     # print(result)
 
 

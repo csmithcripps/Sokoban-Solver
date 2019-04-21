@@ -30,9 +30,6 @@ MOVEMENTS = {"Up": (0, -1),
              "Right": (1, 0),
              "Left": (-1, 0)}
 
-# Placeholder to hold taboo coords
-taboo = []
-
 def new_position(elem, direction):
     return elem[0] + MOVEMENTS[direction][0], elem[1] + MOVEMENTS[direction][1]
 
@@ -72,7 +69,8 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.
     '''
-
+    # Placeholder to hold taboo coords
+    taboo = []
 
     # Work out warehouse limits
     X, Y = zip(*warehouse.walls)
@@ -451,8 +449,7 @@ class SokobanPuzzle(search.Problem):
                     #Update Heuristic
                     heur = heur + manhatten(closest_target, box)
                 return heur
-            else:
-                heur = manhatten(n.state.worker, self.goal.worker)
+            return manhatten(n.state.worker, self.goal.worker)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
